@@ -109,10 +109,10 @@ export default function Landing() {
         <section className="py-16 relative z-20">
           <div className="text-center mb-14">
             <h2 className="font-serif-title text-3xl sm:text-5xl italic font-normal tracking-tight mb-3 text-[#FFE8C2]">
-              A Calibrated Tri-Modal Pipeline
+              A Heuristic Tri-Modal Pipeline
             </h2>
             <p className="text-[#E8B4B8]/90 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-              Combining standardized self-reports, contextual language patterns, and vocal biomarkers for clinical-grade insight.
+              Combining standardized self-reports, contextual language patterns, and heuristic acoustic descriptors for screening-support insight.
             </p>
           </div>
           
@@ -122,7 +122,7 @@ export default function Landing() {
                 icon: ClipboardList,
                 title: 'Clinical PHQ-9',
                 weight: '20% Weight',
-                desc: 'Standardized 9-question depression severity metric calibrated to international diagnostic criteria.',
+                desc: 'Standardized 9-question depression symptom-severity questionnaire used as one screening signal.',
               },
               {
                 icon: Brain,

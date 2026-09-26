@@ -2,10 +2,16 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import sessionmaker
 
+from database import Base
+from backend.main import app
+from routers import auth as auth_router
 from routers import phq as phq_router
 from routers import predict as predict_router
 from schemas.assessment import PHQSubmitRequest, PredictTextRequest
+from schemas.auth import UserCreate
 from services import fusion_service
 from services.audio_service import get_audio_prediction
 from services.negation_service import detect_crisis_intent
@@ -145,6 +151,35 @@ def test_raw_audio_without_descriptors_uses_missing_audio_policy():
     }
 
 
+def test_default_fusion_weights_and_raw_vector_are_current():
+    result = fusion_service.get_fused_prediction([0] * 9, "I had an ordinary day.")
+    assert result["fusion_weights"] == {"text": 0.50, "audio": 0.30, "phq": 0.20}
+    assert result["raw_probabilities"] == pytest.approx({
+        "minimal": 0.585,
+        "mild": 0.240,
+        "moderate": 0.120,
+        "severe": 0.055,
+    })
+
+
+def test_configurable_weights_use_same_production_fusion_path():
+    result = fusion_service.get_fused_prediction(
+        [0] * 9,
+        "I had an ordinary day.",
+        weights={"text": 1.0, "audio": 0.0, "phq": 0.0},
+    )
+    assert result["raw_probabilities"] == pytest.approx(_neutral_text_prediction("")["probabilities"])
+
+
+def test_invalid_fusion_weights_are_rejected():
+    with pytest.raises(ValueError, match="sum to 1.0"):
+        fusion_service.get_fused_prediction(
+            [0] * 9,
+            "I had an ordinary day.",
+            weights={"text": 0.5, "audio": 0.5, "phq": 0.5},
+        )
+
+
 def test_phq_endpoint_item9_forces_high_priority_tier():
     response = asyncio.run(phq_router.submit_phq(
         PHQSubmitRequest(answers=[0, 0, 0, 0, 0, 0, 0, 0, 1]),
@@ -168,3 +203,39 @@ def test_text_endpoint_affirmative_crisis_applies_hre(monkeypatch):
     assert response.priority_score >= 0.90
     assert response.crisis_flag is True
     assert response.resource_display_flag is True
+
+
+def test_backend_exposes_registration_at_frontend_route():
+    registration = app.openapi()["paths"]["/api/auth/register"]
+    assert "post" in registration
+
+
+def test_registration_request_and_response_contract(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'registration.db'}")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    monkeypatch.setattr(auth_router, "hash_password", lambda _password: "test-hash")
+    monkeypatch.setattr(auth_router, "create_access_token", lambda **_kwargs: "access")
+    monkeypatch.setattr(auth_router, "create_refresh_token", lambda **_kwargs: "refresh")
+    try:
+        response = asyncio.run(auth_router.register(
+            UserCreate(email="registration@example.com", password="test-password"),
+            db=session,
+        ))
+        assert response == {
+            "access_token": "access",
+            "refresh_token": "refresh",
+            "token_type": "bearer",
+        }
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_database_schema_initializes_without_checked_in_database(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'fresh.db'}")
+    Base.metadata.create_all(bind=engine)
+    try:
+        assert set(inspect(engine).get_table_names()) == {"assessments", "mood_logs", "users"}
+    finally:
+        engine.dispose()

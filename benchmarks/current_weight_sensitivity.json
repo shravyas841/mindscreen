@@ -1,0 +1,1477 @@
+{
+  "description": "Deterministic sensitivity analysis over constructed modality-score cases; not a labeled dataset, accuracy study, or weight optimization.",
+  "reported_metrics": [
+    "raw fused score vector and winning tier",
+    "temperature-transformed score vector and winning tier",
+    "post-HRE tier, priority score, crisis flag, and resource flag",
+    "whether the raw winning tier changes across weight configurations"
+  ],
+  "held_constant": "Current PHQ mapping, audio heuristic or documented missing-audio prior, temperature 1.20, crisis gate, and HRE rules.",
+  "configurations": {
+    "equal": {
+      "text": 0.3333333333333333,
+      "audio": 0.3333333333333333,
+      "phq": 0.3333333333333333
+    },
+    "text_dominant": {
+      "text": 0.6,
+      "audio": 0.2,
+      "phq": 0.2
+    },
+    "audio_dominant": {
+      "text": 0.2,
+      "audio": 0.6,
+      "phq": 0.2
+    },
+    "phq_dominant": {
+      "text": 0.2,
+      "audio": 0.2,
+      "phq": 0.6
+    },
+    "current_production": {
+      "text": 0.5,
+      "audio": 0.3,
+      "phq": 0.2
+    }
+  },
+  "cases": {
+    "C1-concordant-minimal": {
+      "description": "Constructed low-score agreement across all three modalities.",
+      "inputs": {
+        "phq_answers": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "phq_total": 0,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.8,
+          "mild": 0.1,
+          "moderate": 0.07,
+          "severe": 0.03
+        },
+        "audio_features": {
+          "rms_mean": 0.65,
+          "rms_std": 0.25,
+          "zcr_mean": 0.25,
+          "spectral_centroid": 0.65,
+          "spectral_rolloff": 0.7,
+          "speaking_ratio": 0.9
+        },
+        "missing_audio_policy": null
+      },
+      "raw_tier_changes_across_configurations": false,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.725,
+              "mild": 0.18333333333333332,
+              "moderate": 0.07333333333333333,
+              "severe": 0.018333333333333333
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.725
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.661,
+              "mild": 0.2102,
+              "moderate": 0.098,
+              "severe": 0.0309
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.661
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.661,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.755,
+              "mild": 0.15,
+              "moderate": 0.07200000000000001,
+              "severe": 0.023
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.755
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.687,
+              "mild": 0.1787,
+              "moderate": 0.0969,
+              "severe": 0.0374
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.687
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.687,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.665,
+              "mild": 0.23,
+              "moderate": 0.08399999999999999,
+              "severe": 0.020999999999999998
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.665
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.6071,
+              "mild": 0.2506,
+              "moderate": 0.1083,
+              "severe": 0.0341
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6071
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.6071,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.755,
+              "mild": 0.16999999999999998,
+              "moderate": 0.064,
+              "severe": 0.011000000000000001
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.755
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.6915,
+              "mild": 0.1996,
+              "moderate": 0.0884,
+              "severe": 0.0204
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6915
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.6915,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.7325,
+              "mild": 0.17,
+              "moderate": 0.07500000000000001,
+              "severe": 0.0225
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.7325
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.6664,
+              "mild": 0.1973,
+              "moderate": 0.0998,
+              "severe": 0.0366
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6664
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.6664,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        }
+      }
+    },
+    "C2-text-led-moderate": {
+      "description": "Constructed text-led discordance without an HRE trigger.",
+      "inputs": {
+        "phq_answers": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "phq_total": 0,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.05,
+          "mild": 0.1,
+          "moderate": 0.7,
+          "severe": 0.15
+        },
+        "audio_features": {
+          "rms_mean": 0.65,
+          "rms_std": 0.25,
+          "zcr_mean": 0.25,
+          "spectral_centroid": 0.65,
+          "spectral_rolloff": 0.7,
+          "speaking_ratio": 0.9
+        },
+        "missing_audio_policy": null
+      },
+      "raw_tier_changes_across_configurations": true,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.475,
+              "mild": 0.18333333333333332,
+              "moderate": 0.2833333333333333,
+              "severe": 0.05833333333333333
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.475
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4392,
+              "mild": 0.1987,
+              "moderate": 0.2856,
+              "severe": 0.0765
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4392
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.4392,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.30500000000000005,
+              "mild": 0.15,
+              "moderate": 0.45,
+              "severe": 0.095
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.45
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.3017,
+              "mild": 0.167,
+              "moderate": 0.4172,
+              "severe": 0.1141
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.4172
+          },
+          "post_hre": {
+            "risk_level": "moderate",
+            "priority_score": 0.4172,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.515,
+              "mild": 0.23,
+              "moderate": 0.21,
+              "severe": 0.045
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.515
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4727,
+              "mild": 0.2415,
+              "moderate": 0.2238,
+              "severe": 0.062
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4727
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.4727,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.605,
+              "mild": 0.16999999999999998,
+              "moderate": 0.18999999999999997,
+              "severe": 0.035
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.605
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5491,
+              "mild": 0.1906,
+              "moderate": 0.2092,
+              "severe": 0.0511
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5491
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5491,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.35750000000000004,
+              "mild": 0.17,
+              "moderate": 0.39,
+              "severe": 0.08249999999999999
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.39
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.3439,
+              "mild": 0.1851,
+              "moderate": 0.3697,
+              "severe": 0.1013
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.3697
+          },
+          "post_hre": {
+            "risk_level": "moderate",
+            "priority_score": 0.3697,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        }
+      }
+    },
+    "C3-audio-led-elevated": {
+      "description": "Constructed audio-led discordance without an HRE trigger.",
+      "inputs": {
+        "phq_answers": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "phq_total": 0,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.8,
+          "mild": 0.1,
+          "moderate": 0.07,
+          "severe": 0.03
+        },
+        "audio_features": {
+          "rms_mean": 0.05,
+          "rms_std": 0.02,
+          "zcr_mean": 0.05,
+          "spectral_centroid": 0.15,
+          "spectral_rolloff": 0.2,
+          "speaking_ratio": 0.2
+        },
+        "missing_audio_policy": null
+      },
+      "raw_tier_changes_across_configurations": false,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.5439666666666667,
+              "mild": 0.12583333333333332,
+              "moderate": 0.18963333333333335,
+              "severe": 0.14056666666666667
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.544
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4915,
+              "mild": 0.1451,
+              "moderate": 0.2042,
+              "severe": 0.1591
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4915
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.4915,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.64638,
+              "mild": 0.11549999999999999,
+              "moderate": 0.14178000000000002,
+              "severe": 0.09634000000000001
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6464
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5796,
+              "mild": 0.138,
+              "moderate": 0.1637,
+              "severe": 0.1186
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5796
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5796,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.33914000000000005,
+              "mild": 0.1265,
+              "moderate": 0.29334000000000005,
+              "severe": 0.24101999999999998
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.3391
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.3249,
+              "mild": 0.1428,
+              "moderate": 0.2879,
+              "severe": 0.2444
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.3249
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.3249,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.64638,
+              "mild": 0.1355,
+              "moderate": 0.13378,
+              "severe": 0.08434000000000001
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6464
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5799,
+              "mild": 0.1577,
+              "moderate": 0.1561,
+              "severe": 0.1063
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5799
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5799,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.56957,
+              "mild": 0.11824999999999997,
+              "moderate": 0.17967,
+              "severe": 0.13250999999999996
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5696
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5131,
+              "mild": 0.1384,
+              "moderate": 0.1962,
+              "severe": 0.1522
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5131
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5131,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        }
+      }
+    },
+    "C4-phq-led-moderate": {
+      "description": "Constructed PHQ-led discordance at total score 14.",
+      "inputs": {
+        "phq_answers": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1,
+          0
+        ],
+        "phq_total": 14,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.8,
+          "mild": 0.1,
+          "moderate": 0.07,
+          "severe": 0.03
+        },
+        "audio_features": {
+          "rms_mean": 0.65,
+          "rms_std": 0.25,
+          "zcr_mean": 0.25,
+          "spectral_centroid": 0.65,
+          "spectral_rolloff": 0.7,
+          "speaking_ratio": 0.9
+        },
+        "missing_audio_policy": null
+      },
+      "raw_tier_changes_across_configurations": true,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.4583333333333333,
+              "mild": 0.18333333333333332,
+              "moderate": 0.29,
+              "severe": 0.06833333333333333
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4583
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4249,
+              "mild": 0.198,
+              "moderate": 0.2901,
+              "severe": 0.087
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4249
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.4249,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.595,
+              "mild": 0.15,
+              "moderate": 0.20199999999999999,
+              "severe": 0.053
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.595
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5385,
+              "mild": 0.1708,
+              "moderate": 0.2189,
+              "severe": 0.0718
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5385
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5385,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.505,
+              "mild": 0.23,
+              "moderate": 0.21399999999999997,
+              "severe": 0.051
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.505
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4638,
+              "mild": 0.2408,
+              "moderate": 0.2268,
+              "severe": 0.0686
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4638
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.4638,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.275,
+              "mild": 0.16999999999999998,
+              "moderate": 0.45399999999999996,
+              "severe": 0.10099999999999999
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.454
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.2761,
+              "mild": 0.1849,
+              "moderate": 0.4192,
+              "severe": 0.1198
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.4192
+          },
+          "post_hre": {
+            "risk_level": "moderate",
+            "priority_score": 0.4192,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.5725,
+              "mild": 0.17,
+              "moderate": 0.205,
+              "severe": 0.0525
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5725
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5195,
+              "mild": 0.1889,
+              "moderate": 0.2207,
+              "severe": 0.0709
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5195
+          },
+          "post_hre": {
+            "risk_level": "minimal",
+            "priority_score": 0.5195,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": true
+        }
+      }
+    },
+    "C5-missing-audio": {
+      "description": "Constructed missing-audio case using the production prior.",
+      "inputs": {
+        "phq_answers": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "phq_total": 6,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.05,
+          "mild": 0.1,
+          "moderate": 0.7,
+          "severe": 0.15
+        },
+        "audio_features": null,
+        "missing_audio_policy": [
+          0.25,
+          0.45,
+          0.2,
+          0.1
+        ]
+      },
+      "raw_tier_changes_across_configurations": true,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.13333333333333336,
+              "mild": 0.4166666666666667,
+              "moderate": 0.35000000000000003,
+              "severe": 0.1
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.4167
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.1514,
+              "mild": 0.3912,
+              "moderate": 0.3383,
+              "severe": 0.1191
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.3912
+          },
+          "post_hre": {
+            "risk_level": "mild",
+            "priority_score": 0.3912,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": false
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.1,
+              "mild": 0.29000000000000004,
+              "moderate": 0.49,
+              "severe": 0.12
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.49
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.1197,
+              "mild": 0.2908,
+              "moderate": 0.4501,
+              "severe": 0.1394
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.4501
+          },
+          "post_hre": {
+            "risk_level": "moderate",
+            "priority_score": 0.4501,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": false
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.18,
+              "mild": 0.43000000000000005,
+              "moderate": 0.29000000000000004,
+              "severe": 0.1
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.43
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.1935,
+              "mild": 0.3999,
+              "moderate": 0.288,
+              "severe": 0.1186
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.3999
+          },
+          "post_hre": {
+            "risk_level": "mild",
+            "priority_score": 0.3999,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": false
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.12,
+              "mild": 0.53,
+              "moderate": 0.27,
+              "severe": 0.08
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.53
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.1403,
+              "mild": 0.4838,
+              "moderate": 0.2758,
+              "severe": 0.1001
+            },
+            "winning_tier": "mild",
+            "winning_score": 0.4838
+          },
+          "post_hre": {
+            "risk_level": "mild",
+            "priority_score": 0.4838,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": false
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.12000000000000002,
+              "mild": 0.325,
+              "moderate": 0.44,
+              "severe": 0.115
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.44
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.1387,
+              "mild": 0.3181,
+              "moderate": 0.4094,
+              "severe": 0.1338
+            },
+            "winning_tier": "moderate",
+            "winning_score": 0.4094
+          },
+          "post_hre": {
+            "risk_level": "moderate",
+            "priority_score": 0.4094,
+            "crisis_flag": false,
+            "resource_display_flag": false
+          },
+          "audio_available": false
+        }
+      }
+    },
+    "C6-high-score-HRE": {
+      "description": "High PHQ total with Item 9 zero; HRE is reported separately.",
+      "inputs": {
+        "phq_answers": [
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2,
+          0
+        ],
+        "phq_total": 20,
+        "item9": 0,
+        "text_score_vector": {
+          "minimal": 0.8,
+          "mild": 0.1,
+          "moderate": 0.07,
+          "severe": 0.03
+        },
+        "audio_features": {
+          "rms_mean": 0.65,
+          "rms_std": 0.25,
+          "zcr_mean": 0.25,
+          "spectral_centroid": 0.65,
+          "spectral_rolloff": 0.7,
+          "speaking_ratio": 0.9
+        },
+        "missing_audio_policy": null
+      },
+      "raw_tier_changes_across_configurations": true,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.4583333333333333,
+              "mild": 0.15,
+              "moderate": 0.10666666666666666,
+              "severe": 0.285
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4583
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.423,
+              "mild": 0.1668,
+              "moderate": 0.1255,
+              "severe": 0.2847
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.423
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": false,
+            "resource_display_flag": true
+          },
+          "audio_available": true
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.595,
+              "mild": 0.13,
+              "moderate": 0.092,
+              "severe": 0.18300000000000002
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.595
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5356,
+              "mild": 0.1508,
+              "moderate": 0.113,
+              "severe": 0.2005
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5356
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": false,
+            "resource_display_flag": true
+          },
+          "audio_available": true
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.505,
+              "mild": 0.21000000000000002,
+              "moderate": 0.104,
+              "severe": 0.18100000000000002
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.505
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.4599,
+              "mild": 0.2213,
+              "moderate": 0.1232,
+              "severe": 0.1956
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.4599
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": false,
+            "resource_display_flag": true
+          },
+          "audio_available": true
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.275,
+              "mild": 0.11,
+              "moderate": 0.124,
+              "severe": 0.491
+            },
+            "winning_tier": "severe",
+            "winning_score": 0.491
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.2776,
+              "mild": 0.1294,
+              "moderate": 0.143,
+              "severe": 0.45
+            },
+            "winning_tier": "severe",
+            "winning_score": 0.45
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": false,
+            "resource_display_flag": true
+          },
+          "audio_available": true
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.5725,
+              "mild": 0.15000000000000002,
+              "moderate": 0.095,
+              "severe": 0.18250000000000002
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5725
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5162,
+              "mild": 0.1691,
+              "moderate": 0.1156,
+              "severe": 0.1991
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5162
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": false,
+            "resource_display_flag": true
+          },
+          "audio_available": true
+        }
+      }
+    },
+    "C7-item9-HRE": {
+      "description": "Item 9 endorsement with missing audio; HRE is reported separately.",
+      "inputs": {
+        "phq_answers": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "phq_total": 1,
+        "item9": 1,
+        "text_score_vector": {
+          "minimal": 0.8,
+          "mild": 0.1,
+          "moderate": 0.07,
+          "severe": 0.03
+        },
+        "audio_features": null,
+        "missing_audio_policy": [
+          0.25,
+          0.45,
+          0.2,
+          0.1
+        ]
+      },
+      "raw_tier_changes_across_configurations": false,
+      "configurations": {
+        "equal": {
+          "weights": {
+            "text": 0.3333333333333333,
+            "audio": 0.3333333333333333,
+            "phq": 0.3333333333333333
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.6166666666666667,
+              "mild": 0.2333333333333333,
+              "moderate": 0.10666666666666666,
+              "severe": 0.043333333333333335
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6167
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5599,
+              "mild": 0.2491,
+              "moderate": 0.1297,
+              "severe": 0.0612
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5599
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": true,
+            "resource_display_flag": true
+          },
+          "audio_available": false
+        },
+        "text_dominant": {
+          "weights": {
+            "text": 0.6,
+            "audio": 0.2,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.6900000000000001,
+              "mild": 0.18000000000000002,
+              "moderate": 0.09200000000000003,
+              "severe": 0.038000000000000006
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.69
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.6241,
+              "mild": 0.2037,
+              "moderate": 0.1164,
+              "severe": 0.0557
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6241
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": true,
+            "resource_display_flag": true
+          },
+          "audio_available": false
+        },
+        "audio_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.6,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.47,
+              "mild": 0.32,
+              "moderate": 0.144,
+              "severe": 0.06599999999999999
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.47
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.436,
+              "mild": 0.3165,
+              "moderate": 0.1627,
+              "severe": 0.0849
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.436
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": true,
+            "resource_display_flag": true
+          },
+          "audio_available": false
+        },
+        "phq_dominant": {
+          "weights": {
+            "text": 0.2,
+            "audio": 0.2,
+            "phq": 0.6
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.69,
+              "mild": 0.2,
+              "moderate": 0.084,
+              "severe": 0.026000000000000002
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.69
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.6272,
+              "mild": 0.2235,
+              "moderate": 0.1085,
+              "severe": 0.0408
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.6272
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": true,
+            "resource_display_flag": true
+          },
+          "audio_available": false
+        },
+        "current_production": {
+          "weights": {
+            "text": 0.5,
+            "audio": 0.3,
+            "phq": 0.2
+          },
+          "raw_fusion": {
+            "score_vector": {
+              "minimal": 0.635,
+              "mild": 0.215,
+              "moderate": 0.10500000000000001,
+              "severe": 0.045
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.635
+          },
+          "temperature_transformed": {
+            "score_vector": {
+              "minimal": 0.5751,
+              "mild": 0.2332,
+              "moderate": 0.1284,
+              "severe": 0.0634
+            },
+            "winning_tier": "minimal",
+            "winning_score": 0.5751
+          },
+          "post_hre": {
+            "risk_level": "severe",
+            "priority_score": 0.9,
+            "crisis_flag": true,
+            "resource_display_flag": true
+          },
+          "audio_available": false
+        }
+      }
+    }
+  }
+}

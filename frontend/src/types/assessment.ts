@@ -19,7 +19,6 @@ export interface FusedPredictRequest {
   answers: number[];
   text: string;
   audio_features?: AudioFeatures | null;
-  audio_base64?: string | null;
 }
 
 export interface RiskResponse {

@@ -28,15 +28,6 @@ const phqOptions = [
   { value: 3, label: 'Nearly every day' }
 ];
 
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
-
 export default function Assessment() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -136,7 +127,8 @@ export default function Assessment() {
       setIsRecording(false);
       setActiveStream(null);
       if (timerRef.current) clearInterval(timerRef.current);
-      // Capture real acoustic features from the extractor
+      // Fewer than five frames returns null and follows the same missing-audio
+      // policy as an explicitly skipped recording.
       const features = extractorRef.current.stop();
       setAudioFeatures(features);
     }
@@ -156,8 +148,8 @@ export default function Assessment() {
   const handleSubmit = async () => {
     setSubmitError('');
     try {
-      // Use real acoustic features if available; neutral baseline if skipped
-      // A skipped recording is represented explicitly as a missing modality.
+      // Use real acoustic features if available. A skipped or too-short
+      // recording is represented explicitly as a missing modality.
       // The backend applies its documented missing-audio prior; no fabricated
       // acoustic observation is submitted.
       const features = audioSkipped ? null : audioFeatures;
@@ -319,7 +311,11 @@ export default function Assessment() {
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
                         <CheckCircle className="w-6 h-6 text-green-400" />
                       </div>
-                      <p className="text-green-400 font-semibold">Recording complete — {formatTime(recordingSeconds)}</p>
+                      <p className={`font-semibold ${audioFeatures ? 'text-green-400' : 'text-amber-300'}`}>
+                        {audioFeatures
+                          ? `Recording complete — ${formatTime(recordingSeconds)}`
+                          : 'Recording was too short for analysis and will be treated as unavailable'}
+                      </p>
                       <audio src={audioUrl} controls className="w-full max-w-sm rounded-xl" />
                       <Button variant="outline" onClick={deleteRecording} className="text-red-400 border-red-400/20 hover:bg-red-400/10 text-sm">
                         <Trash2 className="w-4 h-4 mr-2" />

@@ -26,15 +26,29 @@ const SILENCE_THRESHOLD = 0.02; // frames below this RMS are treated as silence
 const FFT_SIZE = 2048;
 const ROLLOFF_PERCENTILE = 0.85;
 
-/** Neutral baseline when audio is skipped or too short to analyse */
-export function featuresToNull(): AudioFeatures {
+export function buildAudioFeatures(
+  rmsValues: number[],
+  zcrValues: number[],
+  centroidValues: number[],
+  rolloffValues: number[],
+  speakingFrames: number,
+  totalFrames: number,
+): AudioFeatures | null {
+  // Very short captures are missing data, not neutral acoustic observations.
+  if (rmsValues.length < 5 || totalFrames < 5) return null;
+
+  const mean = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+  const std = (values: number[], average: number) =>
+    Math.sqrt(values.reduce((a, b) => a + (b - average) ** 2, 0) / values.length);
+
+  const rms_mean = clamp(mean(rmsValues));
   return {
-    rms_mean: 0.3,
-    rms_std: 0.1,
-    zcr_mean: 0.3,
-    spectral_centroid: 0.4,
-    spectral_rolloff: 0.4,
-    speaking_ratio: 0.5,
+    rms_mean,
+    rms_std: clamp(std(rmsValues, rms_mean)),
+    zcr_mean: clamp(mean(zcrValues)),
+    spectral_centroid: clamp(mean(centroidValues)),
+    spectral_rolloff: clamp(mean(rolloffValues)),
+    speaking_ratio: clamp(speakingFrames / totalFrames),
   };
 }
 
@@ -65,7 +79,7 @@ export class AudioFeatureExtractor {
     this.collectFrame();
   }
 
-  stop(): AudioFeatures {
+  stop(): AudioFeatures | null {
     // Cancel animation loop
     if (this.rafHandle !== null) {
       cancelAnimationFrame(this.rafHandle);
@@ -80,25 +94,17 @@ export class AudioFeatureExtractor {
       // ignore cleanup errors
     }
 
-    const n = this.rmsList.length;
-
-    // Need at least 5 frames for meaningful features
-    if (n < 5) return featuresToNull();
-
-    const mean = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
-    const std = (arr: number[], m: number) =>
-      Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length);
-
-    const rms_mean = clamp(mean(this.rmsList));
-    const rms_std = clamp(std(this.rmsList, rms_mean));
-    const zcr_mean = clamp(mean(this.zcrList));
-    const spectral_centroid = clamp(mean(this.centroidList));
-    const spectral_rolloff = clamp(mean(this.rolloffList));
-    const speaking_ratio = clamp(this.speakingFrames / this.totalFrames);
+    const features = buildAudioFeatures(
+      this.rmsList,
+      this.zcrList,
+      this.centroidList,
+      this.rolloffList,
+      this.speakingFrames,
+      this.totalFrames,
+    );
 
     this.reset();
-
-    return { rms_mean, rms_std, zcr_mean, spectral_centroid, spectral_rolloff, speaking_ratio };
+    return features;
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────

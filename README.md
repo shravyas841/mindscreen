@@ -7,7 +7,7 @@
 
 ## 📌 Executive Summary
 
-**MindScreen** is a cutting-edge, privacy-conscious mental health screening application designed to assist in preliminary depression screening and wellness tracking. By leveraging a **multimodal late-fusion decision architecture**, MindScreen integrates three independent input streams:
+**MindScreen** is a mental-health screening-support prototype designed for preliminary screening and wellness tracking. Its **multimodal late-fusion decision architecture** integrates three independent input streams:
 
 1. 📋 **PHQ-9 Clinical Questionnaire** (Standardized medical assessment baseline)
 2. 🧠 **Hosted Emotion Classification** (DistilRoBERTa affect labels mapped heuristically to screening tiers)
@@ -17,7 +17,7 @@
 
 ## ✨ Key Features
 
-- **Multimodal Risk Prediction Engine**: Fuses clinical scores, text sentiments, and acoustic voice biomarkers to generate a triaged risk classification (`Minimal`, `Mild`, `Moderate`, `Severe`).
+- **Multimodal Risk Prediction Engine**: Fuses questionnaire, affective-text, and heuristic acoustic scores to generate a triaged screening tier (`Minimal`, `Mild`, `Moderate`, `High Priority`).
 - **Lexical Indicators**: Displays hand-written keyword contributions used by the fallback/display layer. These are not SHAP values or causal model explanations.
 - **Safety First & Crisis Overrides**: Instant detection of high-risk indicators or self-harm signals (PHQ-9 Q9) automatically triggers emergency helpline banners (iCall, NIMHANS).
 - **Daily Mood Tracker & CBT Exercises**: Interactive daily mood logging with trend visualization (`Recharts`) and dynamic Cognitive Behavioral Therapy (CBT) activity recommendations based on user emotional state.
@@ -29,7 +29,7 @@
 
 ## 🏗️ System Architecture & Multimodal Fusion
 
-MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach. When audio is skipped, the client sends no acoustic vector and the backend applies the documented prior `[0.25, 0.45, 0.20, 0.10]` at the existing 30% weight. This missing-modality policy is heuristic and has not been statistically validated.
+MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach. When audio is skipped or fewer than five analysis frames are available, the client sends no acoustic vector and the backend applies the documented prior `[0.25, 0.45, 0.20, 0.10]` at the existing 30% weight. This missing-modality policy is heuristic and has not been statistically validated. A recording exists temporarily as an in-memory browser Blob for local playback, but the assessment payload transmits only the descriptor vector and does not persist raw audio.
 
 ```
                       ┌────────────────────────────────────────┐
@@ -142,7 +142,6 @@ major project antigravity/
 Ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v18 or higher)
 - [Python](https://www.python.org/) (v3.11 recommended)
-- [FFmpeg](https://ffmpeg.org/) (Required for voice WebM-to-WAV conversion)
 
 ---
 
@@ -222,6 +221,9 @@ Uses the hosted Hugging Face `j-hartmann/emotion-english-distilroberta-base` mod
 pip install -r backend/requirements-dev.txt
 pytest
 python backend/run_submission_evidence.py
+cd frontend
+npm test
+npm run build
 ```
 
-The evidence script writes `benchmarks/submission_evidence.json`. Its latency values are in-process local function microbenchmarks, not HTTP, hosted-API, cloud, or end-to-end deployment measurements. The crisis-language corpus is a constructed software rule-verification set, not a clinical dataset.
+The evidence script writes `benchmarks/submission_evidence.json`. It includes current implementation facts, deterministic HRE cases, a constructed crisis-language corpus, and a descriptive five-configuration weight-sensitivity analysis over constructed modality-score cases. The sensitivity analysis reports raw fusion separately from HRE and is not an accuracy study or weight optimization. Timing values are in-process local function microbenchmarks, not HTTP, database, browser extraction, hosted-API, network, cloud, or frontend-rendering measurements.

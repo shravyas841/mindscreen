@@ -4,6 +4,20 @@ from services.audio_service import get_audio_prediction
 from services.calibration_service import apply_temperature_scaling
 from typing import Optional
 
+DEFAULT_FUSION_WEIGHTS = {"text": 0.50, "audio": 0.30, "phq": 0.20}
+
+
+def _validated_weights(weights: Optional[dict[str, float]]) -> dict[str, float]:
+    selected = dict(DEFAULT_FUSION_WEIGHTS if weights is None else weights)
+    if set(selected) != {"text", "audio", "phq"}:
+        raise ValueError("Fusion weights must contain text, audio, and phq")
+    if any(value < 0 for value in selected.values()):
+        raise ValueError("Fusion weights cannot be negative")
+    if abs(sum(selected.values()) - 1.0) > 1e-9:
+        raise ValueError("Fusion weights must sum to 1.0")
+    return selected
+
+
 def get_fused_prediction(
     phq_answers: list[int],
     text: str,
@@ -11,6 +25,7 @@ def get_fused_prediction(
     audio_base64: Optional[str] = None,
     calibrate: bool = True,
     temperature: float = 1.20,
+    weights: Optional[dict[str, float]] = None,
 ) -> dict:
     """
     Fuses predictions from three modality branches via weighted decision-level fusion,
@@ -27,7 +42,9 @@ def get_fused_prediction(
     text_result = get_text_prediction(text)
     text_probs  = text_result["probabilities"]
 
-    # 2. Audio prediction (real features preferred; base64 fallback)
+    selected_weights = _validated_weights(weights)
+
+    # 2. Audio prediction (descriptors when supplied; missing-audio prior otherwise)
     audio_result = get_audio_prediction(
         audio_base64=audio_base64,
         audio_features=audio_features,
@@ -38,12 +55,14 @@ def get_fused_prediction(
     phq_result = calculate_phq_score(phq_answers)
     phq_probs  = phq_result.probabilities
 
-    # 4. Weighted late fusion  (w_T=0.50, w_A=0.30, w_Q=0.20)
+    # 4. Weighted late fusion. Production defaults are T=0.50, A=0.30, Q=0.20.
     raw_fused = {
-        "minimal":  text_probs["minimal"]  * 0.50 + audio_probs["minimal"]  * 0.30 + phq_probs["minimal"]  * 0.20,
-        "mild":     text_probs["mild"]     * 0.50 + audio_probs["mild"]     * 0.30 + phq_probs["mild"]     * 0.20,
-        "moderate": text_probs["moderate"] * 0.50 + audio_probs["moderate"] * 0.30 + phq_probs["moderate"] * 0.20,
-        "severe":   text_probs["severe"]   * 0.50 + audio_probs["severe"]   * 0.30 + phq_probs["severe"]   * 0.20,
+        label: (
+            text_probs[label] * selected_weights["text"]
+            + audio_probs[label] * selected_weights["audio"]
+            + phq_probs[label] * selected_weights["phq"]
+        )
+        for label in ("minimal", "mild", "moderate", "severe")
     }
 
     # Defensive normalisation
@@ -92,6 +111,7 @@ def get_fused_prediction(
         "base_score":            base_score,
         "probabilities":         final_probs,
         "raw_probabilities":     normalized_probs,
+        "fusion_weights":        selected_weights,
         "crisis_flag":           explicit_crisis,
         "resource_display_flag": resource_display,
         "shap_data":             text_result["shap_data"],
