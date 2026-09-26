@@ -1,12 +1,10 @@
 """
-Statistical Calibration and Uncertainty Quantification Service
----------------------------------------------------------------
-Implements Temperature Scaling and Expected Calibration Error (ECE)
-following Guo et al. (ICML 2017) "On Calibration of Modern Neural Networks".
-
-Addresses Reviewer Major Comment 3:
-Ensures that the output score vector p^F reflects calibrated statistical confidence
-rather than uncalibrated heuristic scores.
+Heuristic Score Transformation and Offline Metric Helpers
+---------------------------------------------------------
+The runtime applies a temperature transform to hand-written score vectors. The
+temperature has not been fitted on labeled validation data, so the result is
+not statistically calibrated confidence. ECE and Brier helpers remain available
+for a future evaluation with independent labels.
 """
 
 import numpy as np
@@ -26,9 +24,9 @@ def apply_temperature_scaling(
     
     Args:
         probs: Dict of class -> probability (must sum to ~1.0)
-        temperature: Scalar T > 0 (T > 1 softens overconfidence)
+        temperature: Scalar T > 0 (T > 1 softens the score distribution)
     Returns:
-        Calibrated probability dictionary
+        Transformed normalized-score dictionary
     """
     labels = list(probs.keys())
     p_vals = np.array([probs[k] for k in labels], dtype=np.float64)

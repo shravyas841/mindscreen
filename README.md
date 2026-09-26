@@ -10,26 +10,26 @@
 **MindScreen** is a cutting-edge, privacy-conscious mental health screening application designed to assist in preliminary depression screening and wellness tracking. By leveraging a **multimodal late-fusion decision architecture**, MindScreen integrates three independent input streams:
 
 1. 📋 **PHQ-9 Clinical Questionnaire** (Standardized medical assessment baseline)
-2. 🧠 **MentalBERT Natural Language Processing** (Analysis of user-written thoughts & journal entries)
-3. 🎙️ **Acoustic Voice Feature Extraction** (Pitch, MFCCs, and energy biomarkers extracted from voice recordings)
+2. 🧠 **Hosted Emotion Classification** (DistilRoBERTa affect labels mapped heuristically to screening tiers)
+3. 🎙️ **Browser Acoustic Descriptors** (RMS, ZCR, spectral centroid/rolloff, and speaking ratio)
 
 ---
 
 ## ✨ Key Features
 
 - **Multimodal Risk Prediction Engine**: Fuses clinical scores, text sentiments, and acoustic voice biomarkers to generate a triaged risk classification (`Minimal`, `Mild`, `Moderate`, `Severe`).
-- **Explainable AI (SHAP Integration)**: Highlights exact keywords in user journal entries that influenced the AI model's prediction for complete model transparency.
+- **Lexical Indicators**: Displays hand-written keyword contributions used by the fallback/display layer. These are not SHAP values or causal model explanations.
 - **Safety First & Crisis Overrides**: Instant detection of high-risk indicators or self-harm signals (PHQ-9 Q9) automatically triggers emergency helpline banners (iCall, NIMHANS).
 - **Daily Mood Tracker & CBT Exercises**: Interactive daily mood logging with trend visualization (`Recharts`) and dynamic Cognitive Behavioral Therapy (CBT) activity recommendations based on user emotional state.
 - **Assessment History & Longitudinal Tracking**: Complete historical logs allowing users to view risk progression over time with detailed probability distribution breakdowns.
 - **Modern Glassmorphism UI**: High-impact, responsive dark-mode user interface designed with fluid micro-animations for a comforting user experience.
-- **Seamless No-Login / Demo Mode**: Flexible configuration allowing instant access for academic demonstrations or secured JWT-authenticated user sessions.
+- **Academic Demo Mode**: The current build uses a shared demo-user bypass. JWTs are issued by login/register routes but are not enforced by protected routes; this build must not be described as secure or multi-user private.
 
 ---
 
 ## 🏗️ System Architecture & Multimodal Fusion
 
-MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach to combine multimodal data points cleanly without breaking if any single modality is omitted:
+MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach. When audio is skipped, the client sends no acoustic vector and the backend applies the documented prior `[0.25, 0.45, 0.20, 0.10]` at the existing 30% weight. This missing-modality policy is heuristic and has not been statistically validated.
 
 ```
                       ┌────────────────────────────────────────┐
@@ -41,13 +41,13 @@ MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach to combine mu
         ▼                                 ▼                                 ▼
 ┌──────────────┐                 ┌─────────────────┐               ┌────────────────┐
 │   PHQ-9      │                 │  Journal Text   │               │ Voice Recording│
-│ Questionnaire│                 │  (Free-form)    │               │  (.webm/.wav)  │
+│ Questionnaire│                 │  (Free-form)    │               │ Browser stream │
 └───────┬──────┘                 └────────┬────────┘               └───────┬────────┘
         │                                 │                                 │
         ▼                                 ▼                                 ▼
 ┌──────────────┐                 ┌─────────────────┐               ┌────────────────┐
-│ Rule-Based   │                 │ MentalBERT NLP  │               │ Librosa / Audio│
-│ Scoring      │                 │ Model Inference │               │ Feature Engine │
+│ Rule-Based   │                 │ Emotion Model   │               │ Web Audio API  │
+│ Scoring      │                 │ + Rule Fallback │               │ Descriptors    │
 └───────┬──────┘                 └────────┬────────┘               └───────┬────────┘
         │ (20% Weight)                    │ (50% Weight)                    │ (30% Weight)
         └────────────────────────┐        │        ┌────────────────────────┘
@@ -59,14 +59,16 @@ MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach to combine mu
                                           │
                                           ▼
                       ┌────────────────────────────────────────┐
-                      │ Risk Level & SHAP Explanation Payload │
+                      │ Tier, Priority Score, Flags & Scores  │
                       └────────────────────────────────────────┘
 ```
 
 ### Fusion Weight Distribution
-$$ \text{Final Risk} = (0.50 \times \text{MentalBERT}) + (0.30 \times \text{Voice Acoustics}) + (0.20 \times \text{PHQ-9}) $$
+$$ \text{Final Score} = (0.50 \times \text{Text}) + (0.30 \times \text{Audio}) + (0.20 \times \text{PHQ-9}) $$
 
-> **Hard Safety Rule:** If PHQ-9 Question 9 (self-harm indicator) $> 0$ or total PHQ-9 score $\ge 20$, the system automatically enforces a **Severe Risk** classification regardless of text/audio weightings.
+> **High-Risk Escalation:** A PHQ-9 total $\ge 20$, Item 9 $>0$, or affirmative self-directed crisis language forces the internal high-priority tier and a priority score of at least 0.90. The crisis flag is set only by Item 9 or affirmative crisis language; a high total alone is not labeled acute crisis.
+>
+> The API retains the legacy `risk_level: "severe"` value for this internal c3 tier; the interface displays **High Priority**. It is not a diagnosis.
 
 ---
 
@@ -86,14 +88,14 @@ $$ \text{Final Risk} = (0.50 \times \text{MentalBERT}) + (0.30 \times \text{Voic
 - **ASGI Server**: Uvicorn
 - **Database**: PostgreSQL (with automatic SQLite fallback for rapid local execution)
 - **ORM**: SQLAlchemy + Alembic Migrations
-- **Authentication**: OAuth2 with Password Hashing (`passlib`/`bcrypt`) & JWT (`python-jose`)
+- **Authentication status**: Password hashing and JWT creation exist, but protected routes currently use a shared demo-user bypass.
 - **Rate Limiting**: `slowapi`
 
 ### **Machine Learning & Signal Processing**
-- **NLP Transformer**: `mental/mental-roberta-base` via Hugging Face `transformers` & `torch`
-- **Audio Processing**: `pydub` (WebM to WAV conversion via FFmpeg), `librosa` (MFCC, Pitch, RMS extraction)
-- **Model Dataset Benchmark**: Trained & validated against DAIC-WOZ clinical audio/text corpora
-- **Interpretability**: SHAP (SHapley Additive exPlanations)
+- **NLP Transformer**: Hosted `j-hartmann/emotion-english-distilroberta-base`, mapped from emotion labels to screening tiers
+- **Audio Processing**: Browser Web Audio API descriptors scored by a hand-designed server-side heuristic
+- **Dataset status**: No repository evidence establishes training or validation on DAIC-WOZ acoustic data
+- **Interpretability status**: Displayed lexical values are deterministic keyword indicators, not SHAP
 
 ---
 
@@ -108,8 +110,8 @@ major project antigravity/
 │   ├── models/                  # Database Schemas (User, Assessment, Mood)
 │   ├── routers/                 # API Endpoints (auth, predict, phq, mood, health)
 │   ├── services/
-│   │   ├── ml_service.py        # MentalBERT Model Inference & SHAP Generator
-│   │   ├── audio_service.py     # Librosa Feature Extraction & Audio Analysis
+│   │   ├── ml_service.py        # Hosted emotion inference, fallback, lexical indicators
+│   │   ├── audio_service.py     # Heuristic scoring of browser acoustic descriptors
 │   │   ├── fusion_service.py    # Multimodal Decision-Level Late Fusion Logic
 │   │   ├── phq_service.py       # Clinical PHQ-9 Rule-based Scoring Engine
 │   │   └── auth_service.py      # JWT Authentication & Demo-mode Security
@@ -160,7 +162,7 @@ python -m venv venv
 # source venv/bin/activate
 
 # Install dependencies
-pip install fastapi uvicorn sqlalchemy pydantic torch transformers librosa pydub python-jose passlib bcrypt slowapi
+pip install -r backend/requirements.txt
 
 # Run the FastAPI server
 python main.py
@@ -192,7 +194,7 @@ npm run dev
 | `GET` | `/health` | API Health Check |
 | `POST` | `/api/auth/register` | User Account Registration |
 | `POST` | `/api/auth/login` | User Login & JWT Retrieval |
-| `POST` | `/api/predict/text` | Text-only MentalBERT Analysis |
+| `POST` | `/api/predict/text` | Text emotion/fallback screening analysis |
 | `POST` | `/api/predict/fused` | Multimodal Prediction (PHQ-9 + Text + Audio) |
 | `GET` | `/api/phq/history` | Historical Assessment Records |
 | `POST` | `/api/mood/log` | Daily Mood Log Entry |
@@ -212,4 +214,14 @@ npm run dev
 ## 📜 License & Acknowledgments
 
 Developed as part of the **RVITM Major Project (BCS685)**.  
-Leverages datasets and pre-trained research models including the **DAIC-WOZ Distress Analysis Interview Corpus** and Hugging Face's `mental/mental-roberta-base`.
+Uses the hosted Hugging Face `j-hartmann/emotion-english-distilroberta-base` model as an affective proxy. The repository contains DAIC-WOZ label/download experiments, but the production audio path is not trained or validated on DAIC-WOZ.
+
+## Verification
+
+```bash
+pip install -r backend/requirements-dev.txt
+pytest
+python backend/run_submission_evidence.py
+```
+
+The evidence script writes `benchmarks/submission_evidence.json`. Its latency values are in-process local function microbenchmarks, not HTTP, hosted-API, cloud, or end-to-end deployment measurements. The crisis-language corpus is a constructed software rule-verification set, not a clinical dataset.

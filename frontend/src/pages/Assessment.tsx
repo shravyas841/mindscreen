@@ -7,7 +7,7 @@ import { Progress } from '../components/ui/Progress';
 import { ArrowRight, ArrowLeft, CheckCircle, Mic, Square, Trash2, SkipForward, AlertCircle } from 'lucide-react';
 import { usePredictFused } from '../hooks/useAssessment';
 import { AudioWaveformVisualizer } from '../components/tools/AudioWaveformVisualizer';
-import { AudioFeatureExtractor, AudioFeatures, featuresToNull } from '../utils/audioFeatures';
+import { AudioFeatureExtractor, AudioFeatures } from '../utils/audioFeatures';
 
 const phqQuestions = [
   "Little interest or pleasure in doing things?",
@@ -157,7 +157,10 @@ export default function Assessment() {
     setSubmitError('');
     try {
       // Use real acoustic features if available; neutral baseline if skipped
-      const features = audioSkipped ? featuresToNull() : (audioFeatures ?? featuresToNull());
+      // A skipped recording is represented explicitly as a missing modality.
+      // The backend applies its documented missing-audio prior; no fabricated
+      // acoustic observation is submitted.
+      const features = audioSkipped ? null : audioFeatures;
 
       const res = await submitAssessment({
         phq: { answers },
@@ -259,7 +262,7 @@ export default function Assessment() {
                 <span className="text-purple-400 font-medium mb-4">Step 11 of 11 — Voice Analysis</span>
                 <h2 className="text-2xl font-semibold mb-2">Speak freely for 10–30 seconds</h2>
                 <p className="text-gray-400 mb-6 text-sm">
-                  Describe how you have been feeling lately. Our acoustic AI will analyse tone, pitch, and speech patterns. You can also skip this step.
+                  Describe how you have been feeling lately. The browser will extract lightweight acoustic descriptors. You can also skip this step.
                 </p>
 
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 bg-white/5 border border-white/10 rounded-xl p-8">

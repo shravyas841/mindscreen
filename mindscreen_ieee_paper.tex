@@ -48,7 +48,7 @@
 % ─────────────────────────────────────────────────────────────────────────────
 \begin{abstract}
 This paper presents \textbf{MindScreen}, a full-stack mental-health screening
-support prototype evaluated in a cloud-hosted environment that fuses three
+support engineering prototype that fuses three
 complementary signal sources---Patient Health Questionnaire-9 (PHQ-9) responses,
 transformer-based text emotion classification, and client-side Web Audio
 acoustic feature extraction (mean RMS loudness, energy variability, zero-crossing
@@ -59,19 +59,16 @@ module: a formally specified deterministic layer that prevents high-risk
 indicators (PHQ-9 Item~9 endorsement, aggregate score $S \ge 20$, or affirmative
 crisis intent detected by a scope-aware rule-based linguistic filter) from being
 diluted by modality averaging.
-The text branch integrates a windowed negation and scope-resolution filter
-to suppress false-positive triggers on negated phrases and third-party attributions.
-The system is deployed for evaluation on a cloud-constrained container
-(0.5~vCPU, 512~MB RAM) and integrates \textbf{Saathi}, an LLM-assisted conversational
+The text branch integrates deterministic first-person, negation, attribution,
+quotation, and idiom rules as an initial crisis-language safety gate.
+The prototype integrates \textbf{Saathi}, an LLM-assisted conversational
 companion backed by Google Gemini~2.5 Flash with crisis-resource routing.
 Evaluation comprises: (i)~HRE anti-dilution verification and 5-way weight
 sensitivity analysis across five constructed evaluation profiles;
-(ii)~negation-aware disambiguation reducing false alarms from 8/9 to 0/9 in a
-constructed negative/third-party adversarial test subset (an 88.9 percentage-point
-decrease within the test suite) while retaining detection on 5/5 affirmative
-statements within a constructed 14-statement evaluation corpus; and (iii)~latency
-profiling showing 13.2~ms for the local rule/heuristic fallback path and 512~ms
-for cloud-augmented screening.
+(ii)~scope-rule verification on a constructed 17-statement corpus, on which the
+implemented detector matched all 17 team-assigned labels; and (iii)~in-process
+latency profiling of deterministic local functions. Hosted-API and end-to-end
+deployment latency were not measured.
 The system is explicitly framed as an engineering screening support prototype.
 No clinical validation or diagnostic accuracy has been established; both are
 identified as primary future work.
@@ -117,11 +114,9 @@ The engineering contributions of this work are:
     present, with formal mathematical specification and verification;
   \item A \textbf{conversational companion (Saathi)} with LLM-backed
     empathetic dialogue and crisis-resource routing to national helplines; and
-  \item A \textbf{cloud-native deployment} benchmarked under a 0.5~vCPU
-    / 512~MB RAM container configuration (Python-managed heap tracked via
-    \texttt{tracemalloc}; total operating system process RSS was not measured)
-    with end-to-end latency under 25~ms for the local fallback path (and
-    $\approx$512~ms when augmented with cloud inference APIs).
+  \item A \textbf{reproducible local evidence script} covering HRE semantics,
+    the constructed crisis-language corpus, and in-process deterministic-function
+    latency with raw observations and Python-managed heap measurements.
 \end{enumerate}
 
 The system is presented as a screening support prototype.
@@ -173,7 +168,7 @@ MentalBERT~\cite{ji2022}             & Text       & —          & No     & Pret
 SimSensei~\cite{devault2014}         & Text+V+A   & Early      & No     & Kiosk system \\
 AVEC~\cite{ringeval2019}             & Text+V+A   & Early/mid  & No     & Benchmark dataset \\
 Cummins~et~al.~\cite{cummins2015}   & Audio      & —          & No     & Research pipeline \\
-\textbf{MindScreen (this work)}      & \textbf{PHQ+Text+A} & \textbf{Late} & \textbf{Yes} & \textbf{Cloud prototype} \\
+\textbf{MindScreen (this work)}      & \textbf{PHQ+Text+A} & \textbf{Late} & \textbf{Yes} & \textbf{Engineering prototype} \\
 \bottomrule
 \end{tabular}
 \vspace{1ex}
@@ -182,9 +177,8 @@ Cummins~et~al.~\cite{cummins2015}   & Audio      & —          & No     & Resea
 Table~\ref{tab:related} are not directly comparable in terms of task definition,
 target population, clinical dataset, deployment status, or evaluation protocol;
 the table is intended to provide architectural context rather than a controlled
-performance comparison. The MindScreen prototype was evaluated in a cloud-hosted
-container; this technical hosting status should not be interpreted as clinical,
-public-health, or production deployment.}
+performance comparison. Repository deployment configuration demonstrates a
+hostable prototype, but no controlled cloud performance environment was verified.}
 \end{table*}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -210,6 +204,8 @@ Boolean crisis indicator $C_F$, and a resource display flag $R_D$.
 
 The $c_3$ category is an internal high-priority screening tier and should not be
 interpreted as a direct diagnosis of severe depression or acute suicide risk.
+For backward compatibility, the current API serializes this tier using the
+legacy string ``severe''; the user interface presents it as ``High Priority.''
 MindScreen maps PHQ-9 scores to this 4-tier space by grouping the clinically
 distinct moderately-severe (15--19) and severe (20--27) PHQ-9 score bands~\cite{kroenke2001}
 into this single high-priority tier ($c_3$, Table~\ref{tab:phq_map}).
@@ -286,21 +282,16 @@ A heuristic mapping $\Gamma: \mathcal{E} \to \{0,1,2,3\}$ translates the
   \end{cases}
   \label{eq:emotion_map}
 \end{equation}
-If affirmative crisis intent is detected in $T$ via windowed negation
-and scope resolution, the index is escalated: $\Gamma(e^*) \leftarrow 3$.
-The scope-resolution filter monitors two lexical tiers:
-(i)~explicit multi-word suicidal expressions (e.g., ``kill myself'', ``end my life'',
-``want to die'', ``no reason to live'', ``commit suicide''), and
-(ii)~distress tokens (``suicide'', ``hopeless'', ``worthless'', ``self-harm'').
-For multi-word phrases, the preceding 30-character text window is evaluated for
-negation operators (e.g., ``not'', ``never'', ``no'', ``don't'', ``refuse to'',
-``would never'', ``no intention'').
-For single distress tokens, a symmetric window (3 tokens preceding and 2 tokens
-succeeding) is evaluated for negation operators and third-party attribution cues
-(e.g., ``friend'', ``roommate'', ``someone'', ``movie'', ``news'').
-Benign colloquial idioms (e.g., ``kill time'', ``killing it'', ``died laughing'')
-are matched against an exception list to suppress false alarms.
-Only affirmative, self-directed crisis expressions escalate the screening index.
+If affirmative crisis intent is detected in $T$ by the deterministic safety gate,
+the index is escalated: $\Gamma(e^*) \leftarrow 3$. The gate matches a bounded
+set of first-person or explicitly self-directed multi-word expressions. Predicate-
+attached negation rules suppress statements such as ``I do not want to die'',
+while third-party speech, quotations, and idioms are handled separately. Idiom
+spans are masked rather than causing early termination so a later first-person
+clause remains detectable. General distress words such as ``hopeless'' and
+``worthless'' do not by themselves assert acute crisis intent. This deterministic
+gate is not a clinically validated suicide-risk detector and cannot cover all
+indirect, multilingual, metaphorical, or culturally specific expressions.
 The score vector $\mathbf{p}^T$ is then formed by assigning $s$ to the
 predicted class and $0.10$ to each remaining class, followed by
 $\ell_1$ normalization.
@@ -313,10 +304,9 @@ fallback maintains software-level service continuity; this heuristic fallback
 provides operational availability rather than equivalent transformer classification fidelity.
 
 \subsubsection{Audio branch ($\mathbf{p}^A$)}
-To bypass the memory constraints of hosting heavy acoustic libraries
-(such as PyTorch and Librosa exceeding 512~MB RAM) on cloud containers,
-MindScreen offloads signal extraction to the client browser via the standard
-Web Audio API.
+To avoid adding server-side acoustic processing dependencies, MindScreen
+extracts signal descriptors in the client browser via the standard Web Audio
+API. No deployment-memory comparison was measured for this design choice.
 During voice input, the browser captures audio via an \texttt{AudioContext}
 (native browser sampling at 44.1 or 48~kHz).
 An \texttt{AnalyserNode} with FFT size $N_{\text{fft}} = 2048$ computes real-time
@@ -369,7 +359,10 @@ If voice input is omitted by the user, a conservative prior vector
 $\mathbf{p}^A = [0.25, 0.45, 0.20, 0.10]^T$ is assigned.
 This distribution skews probability mass slightly toward the mild tier ($c_1$)
 as an intentional engineering safeguard, preventing unobserved audio from
-prematurely asserting an absence of distress.
+prematurely asserting an absence of distress. The client sends a null audio
+field, the server reports audio as unavailable, and the fixed 30\% audio weight
+is applied to this prior. No acoustic observation is fabricated, weights are
+not renormalized, and this missing-modality policy has not been statistically validated.
 
 \subsection{Decision-Level Late Fusion and Score Transformation}
 \label{sec:fusion}
@@ -490,10 +483,10 @@ Algorithm~\ref{alg:fusion} gives the complete inference flow.
 \caption{MindScreen Tri-Modal Inference with HRE}
 \label{alg:fusion}
 \begin{algorithmic}[1]
-\REQUIRE $\mathbf{q} \in \{0,1,2,3\}^9$, text $T$, audio features $\mathbf{f} \in [0,1]^6$
+\REQUIRE $\mathbf{q} \in \{0,1,2,3\}^9$, text $T$, optional audio features $\mathbf{f} \in [0,1]^6$
 \ENSURE Tier $\hat{y}$, score $c_{\text{out}}$, crisis flag $C_F$, resource flag $R_D$
 \STATE $\mathbf{p}^Q \leftarrow \Phi_Q\!\left(\sum_{i=1}^9 q_i\right)$
-\STATE $\mathbf{p}^T \leftarrow \text{NLP}(T)$;\; $\mathbf{p}^A \leftarrow \text{Audio}(\mathbf{f})$
+\STATE $\mathbf{p}^T \leftarrow \text{NLP}(T)$;\; $\mathbf{p}^A \leftarrow \text{Audio}(\mathbf{f})$ if supplied, otherwise the fixed prior
 \STATE $\mathbf{p}^F \leftarrow 0.50\,\mathbf{p}^T + 0.30\,\mathbf{p}^A + 0.20\,\mathbf{p}^Q$
 \STATE Compute softened vector $\mathbf{p}^{\text{soft}}$ via \eqref{eq:temperature} ($T=1.20$)
 \STATE $\hat{y} \leftarrow \arg\max_k p_k^{\text{soft}}$;\; $s_F \leftarrow \max_k p_k^{\text{soft}}$;\; $c_{\text{out}} \leftarrow s_F$
@@ -515,7 +508,7 @@ Algorithm~\ref{alg:fusion} gives the complete inference flow.
 Saathi is an interactive, LLM-assisted conversational component backed by
 Google Gemini~2.5 Flash, maintaining an 8-turn conversational context.
 Saathi is invoked post-screening as a distinct conversational companion and is
-not part of the 512~ms assessment screening pipeline.
+not part of the deterministic local screening benchmark.
 It operates in four sequential stages:
 (1)~a \textit{crisis safety gate} utilizing linguistic negation and
 scope-resolved intent analysis to immediately surface national helpline
@@ -544,16 +537,14 @@ four core data-governance principles:
     an explicit consent disclaimer stating that MindScreen is an engineering research
     prototype, not a diagnostic or emergency medical device, and does not replace professional
     consultation.
-  \item \textbf{Ephemeral client-side audio}: Raw vocal waveforms are captured and
-    processed entirely within the user's browser using the Web Audio API. Audio waveforms
-    are never recorded, cached on persistent storage, or transmitted across the network.
-    Only the 6-dimensional compact numerical vector $\mathbf{f}$ is sent to the server.
-  \item \textbf{External API privacy}: Free-text journal inputs sent to cloud inference
-    endpoints (Hugging Face and Google Gemini APIs) are transmitted over TLS without
-    Personally Identifiable Information (PII) or user account identifiers.
-  \item \textbf{Offline data containment}: When operating in disconnected mode, local
-    rule-based and keyword fallbacks ensure complete operational continuity without any
-    outbound data egress.
+  \item \textbf{Client-side audio processing}: The browser creates an in-memory
+    recording for playback and extracts six numerical descriptors. The application
+    does not upload the raw audio blob; only the descriptor vector is sent.
+  \item \textbf{External API limitation}: Free-text journal and companion inputs
+    can be sent to Hugging Face or Google Gemini endpoints. The prototype does not
+    implement PII detection or redaction, so users must not assume entered PII is removed.
+  \item \textbf{Local inference fallback}: If hosted inference fails, deterministic
+    local rules provide a reduced-fidelity screening path after the attempted request.
 \end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -562,44 +553,39 @@ four core data-governance principles:
 
 \subsection{HRE Rule Execution Verification and Weight Sensitivity}
 
-We evaluated HRE execution across three adversarial masking scenarios
-(Table~\ref{tab:hre_verify}) where modality signals conflict, causing linear
-fusion alone to produce false negatives.
-In TC-1 ($S=22 \ge 20$), joy text and active audio push linear fusion to
-``mild''; Rule~1 \eqref{eq:hre_severe} deterministically overrides the output
-to internal tier $c_3$.
-In TC-2 ($S=3, q_9=1$), linear fusion produces ``minimal''; Rule~2
-\eqref{eq:hre_escalate} escalates the output to $c_3$ and asserts $C_F = \text{TRUE}$.
-In TC-3, affirmative crisis text overrides low questionnaire scores.
+We executed four isolated scenarios through the production fusion, score
+transformation, HRE, audio, PHQ-9, and crisis-gate functions using a fixed local
+text score vector to avoid hosted-API variability (Table~\ref{tab:hre_verify}).
+HRE-1 isolates $S\ge20$ with $q_9=0$ and no crisis language; it escalates the
+tier and resources while leaving $C_F$ false. HRE-2 isolates Item~9, HRE-3
+isolates affirmative text, and HRE-4 verifies the no-trigger path.
 
 \begin{table}[!t]
 \caption{HRE Verification: Adversarial Masking Scenarios}
 \label{tab:hre_verify}
 \centering
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}p{2.6cm}p{2.2cm}cc@{}}
+\begin{tabular}{@{}p{2.2cm}p{2.4cm}ccc@{}}
 \toprule
 \textbf{Scenario} & \textbf{Signal State}
-  & \textbf{Fused Only} & \textbf{With HRE} \\
+  & \textbf{Tier} & $C_F$ & $R_D$ \\
 \midrule
-TC-1: Masked high score
-  & $S=22$, joy text, active audio
-  & Mild ($c_1$) & \textbf{$c_3$} [$c_{\text{out}}\!=\!0.90, R_D$] \\
-TC-2: Item~9 endorsed
-  & $S=3, q_9=1$, neutral text
-  & Minimal ($c_0$) & \textbf{$c_3$} [$c_{\text{out}}\!=\!0.90, C_F, R_D$] \\
-TC-3: Crisis keyword
-  & $S=2$, ``hopeless'' text
-  & Mild ($c_1$) & \textbf{$c_3$} [$c_{\text{out}}\!=\!0.90, C_F, R_D$] \\
+HRE-1: High score only & $S=20,q_9=0$, ordinary text
+  & $c_3$ ($0.90$) & F & T \\
+HRE-2: Item~9 & $S=1,q_9=1$, ordinary text
+  & $c_3$ ($0.90$) & T & T \\
+HRE-3: Crisis text & $S=0$, ``I want to die''
+  & $c_3$ ($0.90$) & T & T \\
+HRE-4: No trigger & $S=0,q_9=0$, ordinary text
+  & $c_0$ ($0.4907$) & F & F \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-These scenarios verify the intended execution of the deterministic HRE rules
-under selected constructed input conditions. They do not establish that the
-underlying crisis-intent detector is clinically sensitive, specific, or robust
-to unseen language.
+The score distributions remain base heuristic distributions; the 0.90 value is
+an escalation priority floor rather than a probability. These constructed cases
+verify software semantics only and do not establish clinical performance.
 
 To evaluate the sensitivity of late fusion to weighting choices and test the
 anti-dilution behavior of the HRE module, we conducted an empirical sensitivity
@@ -625,8 +611,8 @@ specified modality score vectors ($\mathbf{p}^Q, \mathbf{p}^T, \mathbf{p}^A$):
 •~P3 ($S=20$): $\mathbf{p}^Q=[0.00, 0.05, 0.15, 0.80]^T$, $\mathbf{p}^T=[0.90, 0.05, 0.03, 0.02]^T$, $\mathbf{p}^A=[0.32, 0.45, 0.19, 0.04]^T$;
 •~P4 ($S=6$): $\mathbf{p}^Q=[0.10, 0.70, 0.15, 0.05]^T$, $\mathbf{p}^T=[0.90, 0.05, 0.03, 0.02]^T$, $\mathbf{p}^A=[0.03, 0.12, 0.43, 0.42]^T$;
 •~P5 ($S=2, q_9=1$): $\mathbf{p}^Q=[0.80, 0.15, 0.05, 0.00]^T$, $\mathbf{p}^T=[0.10, 0.15, 0.70, 0.05]^T$, $\mathbf{p}^A=[0.13, 0.48, 0.32, 0.07]^T$.
-The scores reported in Table~\ref{tab:ablation} represent the maximum convex fused
-score ($s_F$) before deterministic HRE escalation. The corresponding HRE output
+The scores reported in Table~\ref{tab:ablation} represent $\max_k p_k^F$ before
+the temperature transformation and deterministic HRE escalation. The corresponding HRE output
 is shown separately using the notation $c_3^*$. All values are rounded to two decimal places.
 
 \begin{table*}[!t]
@@ -649,136 +635,69 @@ P5: Implicit Ideation                & $0.36 \to c_3^*$ & $0.49 \to c_3^*$ & $0.
 \end{tabular}
 \end{table*}
 
-\subsection{Negation-Aware Linguistic Intent Disambiguation}
+\subsection{Deterministic Crisis-Language Rule Verification}
 
-To resolve the false-positive vulnerability of naive keyword matching, we
-evaluated our windowed negation and scope-resolution service over a constructed
-adversarial corpus of 14 distress and negated test statements
-(Table~\ref{tab:negation_corpus}).
-The 14 test statements were authored by the project team as a targeted rule-verification
-suite covering known failure modes of naive keyword matching (negation, third-party
-attribution, and figurative idioms).
-This evaluation is a logic-verification test of the scope-resolution rules rather
-than an evaluation on an annotated naturalistic clinical text dataset.
+The safety gate was evaluated on a 17-statement constructed rule-verification
+corpus authored by the project team. It includes eight affirmative cases and
+nine negative cases spanning direct first-person intent, predicate-attached
+negation, third-party speech, quotation, idioms, mixed clauses, and unrelated
+negation. The corpus and per-statement output are archived in
+\texttt{benchmarks/submission\_evidence.json}. It is not a clinical dataset.
 
 \begin{table}[!t]
-\caption{Constructed Crisis Intent Evaluation Corpus}
-\label{tab:negation_corpus}
-\centering
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}cp{4.2cm}ccc@{}}
-\toprule
-\textbf{ID} & \textbf{Input Statement} & \textbf{Class} & \textbf{Naive} & \textbf{Scope} \\
-\midrule
-S1 & ``I want to kill myself, I cannot handle this.'' & Crisis & FP/TP$^\dagger$ & \textbf{TP} \\
-S2 & ``I feel so hopeless and worthless every day.''   & Crisis & TP & \textbf{TP} \\
-S3 & ``I am going to end my life tonight.''            & Crisis & TP & \textbf{TP} \\
-S4 & ``There is no reason to live for me.''           & Crisis & TP & \textbf{TP} \\
-S5 & ``Thinking about suicide constantly.''           & Crisis & TP & \textbf{TP} \\
-\midrule
-S6 & ``I do not want to kill myself, just stressed.'' & Negated   & FP & \textbf{TN} \\
-S7 & ``I would never commit suicide, love family.''   & Negated   & FP & \textbf{TN} \\
-S8 & ``I am not hopeless, things are getting better.'' & Negated  & FP & \textbf{TN} \\
-S9 & ``My friend told me she wanted to die.''         & 3rd-Party & FP & \textbf{TN} \\
-S10& ``Watched a movie about suicide yesterday.''     & 3rd-Party & FP & \textbf{TN} \\
-S11& ``We were just trying to kill time before flight.''& Idiom   & FP & \textbf{TN} \\
-S12& ``I almost died laughing at that joke.''         & Figurative& FP & \textbf{TN} \\
-S13& ``She was killing it on stage tonight.''         & Idiom     & FP & \textbf{TN} \\
-S14& ``No intention of dying, just exhausted.''       & Negated   & TN & \textbf{TN} \\
-\bottomrule
-\multicolumn{5}{@{}l}{\footnotesize $^\dagger$Under naive matching, keyword detection flags all triggers indiscriminately.}
-\end{tabular}%
-}
-\end{table}
-
-Under naive substring matching, negated phrases (e.g., ``I do not want to die'',
-``would never commit suicide'') and third-party references (e.g., ``my friend
-talked about suicide'') caused false alarms on 8 of 9 non-crisis statements
-(88.9\% FPR, Table~\ref{tab:negation}).
-In contrast, the scope-resolution filter produced no false alarms on the nine
-negative or third-party statements (0/9, an absolute decrease of 88.9 percentage
-points within this test suite) and detected all five affirmative statements in
-this constructed rule-verification set.
-These results characterize behavior on the constructed rule-verification suite only.
-They demonstrate that the implemented scope rules handled the selected negation,
-third-party, and figurative examples, but they do not establish generalization
-to naturalistic clinical language, culturally specific expressions, sarcasm, or
-unseen crisis-related phrasing.
-
-\begin{table}[!t]
-\caption{Crisis Intent Disambiguation: Naive vs.\ Scope-Resolved}
+\caption{Constructed Crisis-Language Rule Verification}
 \label{tab:negation}
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lcc@{}}
 \toprule
-\textbf{Evaluation Metric} & \textbf{Naive Substring} & \textbf{Scope-Resolved Filter} \\
+\textbf{Metric} & \textbf{Naive substring} & \textbf{Deterministic gate} \\
 \midrule
-Affirmative Detection Rate      & 100.0\% (5/5) & \textbf{100.0\% (5/5)} \\
-False Positive Rate (FPR)       & 88.9\% (8/9)  & \textbf{0.0\% (0/9)} \\
-False Alarm Reduction           & —             & \textbf{88.9 pp absolute} \\
-Overall Disambiguation Accuracy & 42.9\% (6/14) & \textbf{100.0\% (14/14)} \\
+Affirmative detection & 5/8 (62.5\%) & \textbf{8/8 (100.0\%)} \\
+False-positive rate & 9/9 (100.0\%) & \textbf{0/9 (0.0\%)} \\
+Overall agreement & 5/17 (29.4\%) & \textbf{17/17 (100.0\%)} \\
 \bottomrule
-\multicolumn{3}{@{}l}{\footnotesize All metrics calculated on the 14-statement constructed suite;} \\
-\multicolumn{3}{@{}l}{\footnotesize not empirical estimates of clinical model performance.}
+\multicolumn{3}{@{}l}{\footnotesize Team-assigned labels on a constructed software-rule corpus only.}
 \end{tabular}%
 }
 \end{table}
 
-\subsection{Deployment Latency and Memory}
+The exact-set result verifies the implemented rules for these examples only.
+It must not be interpreted as clinical sensitivity, specificity, diagnostic
+accuracy, or evidence of generalization to unseen language.
+\subsection{Local Deterministic-Function Latency}
 \label{sec:latency}
 
-All measurements were taken on a cloud-hosted evaluation container
-(0.5~vCPU, 512~MB RAM, Ubuntu 22.04, Python 3.11, FastAPI 0.111) under
-sequential single-request load (Table~\ref{tab:latency}).
-Each local component was timed over 50 invocations after a 10-call warm-up;
-P95 is computed from raw per-invocation observations.
-Hosted-API latencies include network round-trip time.
-Reported memory values represent peak Python-managed heap allocations measured
-via \texttt{tracemalloc}; total operating system process Resident Set Size (RSS)
-was not profiled and will be larger due to Python runtime overhead.
+The reproducible evidence script timed 50 invocations after a 10-call warm-up
+using \texttt{time.perf\_counter} on Windows~11, AMD64, Python~3.12.3
+(Intel64 Family~6 Model~183). Peak values use \texttt{tracemalloc} and therefore
+represent Python-managed allocations rather than process RSS. Table~\ref{tab:latency}
+covers in-process deterministic functions only; it excludes HTTP handling,
+database access, browser feature extraction, hosted APIs, and network round trips.
 
 \begin{table}[!t]
-\caption{End-to-End Latency and Memory Profile}
+\caption{Local Deterministic-Function Microbenchmark}
 \label{tab:latency}
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccc@{}}
 \toprule
-\textbf{Pipeline Component}
-  & \textbf{Mean (ms)} & \textbf{P95 (ms)} & \textbf{Heap (MB)}$^*$ \\
+\textbf{Function} & \textbf{Mean (ms)} & \textbf{P95 (ms)} & \textbf{Peak heap (KB)} \\
 \midrule
-PHQ-9 rule mapping             &   1.2 &    2.4 & $<$1   \\
-Acoustic feature scoring (local)&   8.4 &   14.2 & $<$12  \\
-Keyword fallback path (NLP)    &   3.6 &    6.1 & $<$5   \\
-Hosted HF API (DistilRoBERTa)  & 480.0 & 1120.0 & Ext.   \\
-Saathi Companion (Gemini 2.5)$^\ddagger$ & 390.0 & 780.0 & Ext. \\
-\midrule
-\textbf{Local screening path}  &  \textbf{13.2} &  \textbf{22.7} & $<$\textbf{25} \\
-\textbf{Cloud screening path}  & \textbf{512.0} & \textbf{1150.0} & $<$\textbf{85} \\
+PHQ-9 mapping & 0.0136 & 0.0146 & 1.848 \\
+Acoustic scoring & 0.0317 & 0.0407 & 4.445 \\
+Crisis-language gate & 0.0496 & 0.0580 & 2.254 \\
+Local fusion pipeline & 0.1889 & 0.2083 & 10.021 \\
 \bottomrule
-\multicolumn{4}{@{}l}{\footnotesize $^*$Memory values reflect peak Python heap allocations tracked via \texttt{tracemalloc};} \\
-\multicolumn{4}{@{}l}{\footnotesize \phantom{$^*$}total OS process Resident Set Size (RSS) was not measured.} \\
-\multicolumn{4}{@{}l}{\footnotesize $^\ddagger$Saathi is an interactive conversational module invoked post-screening;} \\
-\multicolumn{4}{@{}l}{\footnotesize \phantom{$^\ddagger$}it is not a sequential component of the 512~ms assessment pipeline.}
 \end{tabular}%
 }
 \end{table}
 
-The local screening path (PHQ-9 rule scoring, client-side acoustic scoring, and
-keyword fallback) executes within 25~ms and 25~MB of Python heap, ensuring
-operational continuity if network connectivity is impaired.
-The reported cloud screening latency (512.0~ms mean) includes the server-side
-screening operations (PHQ-9 mapping and acoustic scoring) and the Hugging Face
-inference API request, including network round-trip time.
-The local screening operations are included in the same end-to-end measurement
-and should therefore not be added independently to the reported cloud mean.
-Saathi's Gemini request (390.0~ms mean) is measured separately during the interactive
-conversational stage and is not included in the assessment pipeline latency.
-These figures characterize prototype performance under single-user load;
-concurrent-load throughput has not been profiled.
-
-% ─────────────────────────────────────────────────────────────────────────────
+Raw per-invocation observations and environment metadata are stored in
+\texttt{benchmarks/submission\_evidence.json}. These measurements are not
+deployment latency. Hosted Hugging Face, Gemini, Render-container, concurrent-load,
+and end-to-end cloud latency were not measured and no numerical claims are made
+for them.
 \section{Limitations and Future Work}
 \label{sec:limitations}
 
@@ -803,7 +722,7 @@ Future work will explore lightweight on-device ONNX/WebAssembly neural feature
 extractors.
 
 \textbf{Linguistic scope boundaries.}
-While windowed negation and third-party scope resolution have been integrated,
+While deterministic negation, attribution, quotation, and idiom rules have been integrated,
 detecting subtle metaphorical, sarcastic, or culturally implicit distress
 remains a limitation of rule-based filters.
 Future work will evaluate lightweight zero-shot NLI models for deeper semantic
@@ -823,14 +742,13 @@ remain essential future work.
 
 This paper presented MindScreen, an engineering prototype of a full-stack
 multimodal mental-health screening support system built around three principles:
-decision-level late fusion for modality independence, a formally specified
+decision-level late fusion, a formally specified
 deterministic HRE module that prevents high-risk indicators from being diluted
-by averaging, and a cloud-hosted deployment benchmarked under a 512~MB container
-configuration, with Python-managed heap allocations measured using \texttt{tracemalloc}.
-The HRE module produced the expected rule-compliant output across three
-constructed masking scenarios where linear fusion alone produced false negatives.
-Latency profiling confirmed 13.2~ms local and 512~ms cloud-augmented
-screening performance.
+by averaging, and a reproducible deterministic evidence script.
+The HRE module produced the expected rule-compliant output across four isolated
+constructed scenarios. In-process latency was measured for local deterministic
+functions; hosted API, HTTP, database, browser, concurrent-load, and end-to-end
+deployment latency remain unmeasured.
 The system is explicitly presented as an engineering prototype; no clinical
 diagnostic efficacy is claimed, and formal clinical evaluation remains the
 prerequisite for healthcare deployment.

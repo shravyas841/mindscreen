@@ -95,9 +95,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Confidence</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Priority Score</p>
               <p className="text-xl font-bold text-white print:text-black">
-                {(result.confidence * 100).toFixed(1)}%
+                {(result.priority_score * 100).toFixed(1)}%
               </p>
             </div>
             <div>
@@ -172,7 +172,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {result.shap_explanation?.words && result.shap_explanation.words.length > 0 && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                2. Linguistic Feature Attribution (Influential Lexical Tokens)
+                2. Deterministic Lexical Indicators
               </h3>
               <div className="flex flex-wrap gap-2">
                 {result.shap_explanation.words.map((w, i) => (
@@ -195,7 +195,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {result.audio_features && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                3. Vocal Acoustic Biomarker Descriptors (Web Audio API)
+                3. Vocal Acoustic Descriptors (Web Audio API; Heuristic)
               </h3>
               <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                 <div className="p-2 rounded bg-white/5 border border-white/10 print:border-gray-200">

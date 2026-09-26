@@ -1,7 +1,11 @@
 """
-Generate Raw Evidence and Archive Experimental Benchmarks
+Generate Legacy Exploratory Evidence
 --------------------------------------------------------
-Executes all benchmarks without mocked or hand-waving steps, recording:
+This historical script predates the current safety semantics. Its constructed
+profiles and outputs remain for audit history and must not be cited as current
+submission evidence. Use ``run_submission_evidence.py`` instead.
+
+It records:
 1. Exact P1-P5 sensitivity vectors, raw fused scores, temperature-softened scores, and HRE outputs.
 2. 50-run local latency profiling with warm-up, computing mean, std, p95, and tracemalloc peak heap.
 3. 14-statement crisis corpus full execution trace (naive vs scope-resolved).

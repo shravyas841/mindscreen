@@ -53,8 +53,8 @@ def _query_hf_api(text: str) -> list | None:
     return None
 
 
-def _build_shap_heuristic(text: str, risk_idx: int) -> list:
-    """Simple keyword-based feature attribution (displayed as SHAP words)."""
+def _build_lexical_indicators(text: str, risk_idx: int) -> list:
+    """Return hand-written keyword indicators; these are not SHAP values."""
     words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
     severe_kw  = {"suicide", "kill", "die", "hopeless", "end", "worthless", "pain"}
     moderate_kw = {"depressed", "anxious", "sad", "tired", "alone", "crying", "exhausted", "empty"}
@@ -97,7 +97,7 @@ def _fallback_prediction(text: str) -> dict:
         "risk_level": risk,
         "confidence": conf,
         "probabilities": probs,
-        "shap_data": {"words": _build_shap_heuristic(text, idx)},
+        "shap_data": {"words": _build_lexical_indicators(text, idx)},
     }
 
 
@@ -141,7 +141,7 @@ def get_text_prediction(text: str) -> dict:
             "risk_level":    risk_label,
             "confidence":    round(score, 4),
             "probabilities": probabilities,
-            "shap_data":     {"words": _build_shap_heuristic(text, risk_idx)},
+            "shap_data":     {"words": _build_lexical_indicators(text, risk_idx)},
         }
 
     print("HF API unavailable — using keyword fallback.")

@@ -1,7 +1,11 @@
 """
-Save Final Raw Evidence for HRE, Latency, and Negation Tests
+Save Legacy Raw Evidence for HRE, Latency, and Negation Tests
 -----------------------------------------------------------
-Archives explicit runtime evidence for:
+This historical script predates the current HRE and crisis-language rules. Its
+outputs are retained for traceability and are not authoritative submission
+evidence. Use ``run_submission_evidence.py`` for current results.
+
+It archives:
 1. Adversarial HRE Masking Scenarios (TC-1, TC-2, TC-3)
 2. 50-run Latency Traces with min, max, p95, mean, and std
 3. Negation Disambiguation Results

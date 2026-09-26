@@ -24,7 +24,7 @@ export interface FusedPredictRequest {
 
 export interface RiskResponse {
   risk_level: 'minimal' | 'mild' | 'moderate' | 'severe';
-  confidence: number;
+  priority_score: number;
   probabilities: {
     minimal: number;
     mild: number;
@@ -36,6 +36,7 @@ export interface RiskResponse {
     phq_factors?: { question: string; value: number }[];
   } | null;
   audio_features?: AudioFeatures | null;
+  audio_available: boolean;
   raw_probabilities?: {
     minimal: number;
     mild: number;
@@ -43,5 +44,6 @@ export interface RiskResponse {
     severe: number;
   } | null;
   crisis_flag: boolean;
+  resource_display_flag: boolean;
   helplines?: string[] | null;
 }

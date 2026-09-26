@@ -21,13 +21,18 @@ async def submit_phq(
         raise HTTPException(status_code=422, detail="Each answer must be 0, 1, 2, or 3")
 
     phq_result = calculate_phq_score(request.answers)
-    crisis_flag = phq_result.total_score >= 15 or request.answers[8] > 0
+    high_score = phq_result.total_score >= 20
+    crisis_flag = request.answers[8] > 0
+    escalated = high_score or crisis_flag
+    risk_level = "severe" if escalated else phq_result.severity
+    priority_score = max(0.90, phq_result.confidence) if escalated else phq_result.confidence
+    resource_display = escalated or risk_level == "severe"
 
     assessment = Assessment(
         user_id       = current_user.id,
         phq_answers   = request.answers,
-        risk_level    = phq_result.severity,
-        confidence    = phq_result.confidence,
+        risk_level    = risk_level,
+        confidence    = priority_score,
         probabilities = phq_result.probabilities,
         shap_data     = phq_result.shap_data,
         crisis_flag   = crisis_flag,
@@ -37,16 +42,17 @@ async def submit_phq(
     db.refresh(assessment)
 
     response = RiskResponse(
-        risk_level       = phq_result.severity,
-        confidence       = phq_result.confidence,
+        risk_level       = risk_level,
+        priority_score   = priority_score,
         probabilities    = phq_result.probabilities,
         shap_explanation = phq_result.shap_data,
         crisis_flag      = crisis_flag,
+        resource_display_flag = resource_display,
         helplines        = [
             "iCall: 9152987821",
             "NIMHANS: 080-46110007",
             "Vandrevala Foundation: 1860-2662-345"
-        ] if crisis_flag else None,
+        ] if resource_display else None,
     )
 
     return response

@@ -24,10 +24,12 @@ class FusedPredictRequest(BaseModel):
 
 class RiskResponse(BaseModel):
     risk_level: str
-    confidence: float
+    priority_score: float
     probabilities: Dict[str, float]
     raw_probabilities: Optional[Dict[str, float]] = None
     shap_explanation: Optional[Dict[str, Any]] = None
     audio_features: Optional[Dict[str, float]] = None
+    audio_available: bool = False
     crisis_flag: bool
+    resource_display_flag: bool
     helplines: Optional[List[str]] = None

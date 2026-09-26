@@ -73,7 +73,7 @@ export default function Landing() {
               </h1>
               
               <p className="text-sm sm:text-base text-[#F0C0C6] font-medium leading-relaxed mb-7 max-w-lg mx-auto">
-                A quiet screening sanctuary integrating standardized PHQ-9 metrics, MentalBERT semantics, and voice acoustic biomarkers.
+                A screening-support prototype combining PHQ-9 responses, emotion-model scores, and heuristic acoustic descriptors.
               </p>
 
               <div className="flex items-center justify-center">
@@ -126,7 +126,7 @@ export default function Landing() {
               },
               {
                 icon: Brain,
-                title: 'MentalBERT NLP',
+                title: 'Emotion Text Signal',
                 weight: '50% Weight',
                 desc: 'Domain-adapted transformer analyzing semantic sentiment, cognitive distortions, and journal reflections.',
               },
@@ -134,7 +134,7 @@ export default function Landing() {
                 icon: Mic,
                 title: 'Vocal Acoustics',
                 weight: '30% Weight',
-                desc: 'Acoustic feature extraction isolating pitch variation, energy contours, and MFCC biomarkers.',
+                desc: 'Browser extraction of RMS, ZCR, spectral centroid/rolloff, and speaking-ratio descriptors.',
               }
             ].map((feature, i) => (
               <motion.div 

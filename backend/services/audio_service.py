@@ -14,7 +14,7 @@ from typing import Optional
 #   spectral_rolloff  — normalised 85% rolloff (0-1): high-frequency energy
 #   speaking_ratio   — fraction of voiced frames (0-1)
 #
-# Clinical mapping (based on depression speech literature: Cummins et al. 2015):
+# Heuristic mapping informed by depression speech literature (Cummins et al. 2015):
 #   Depressed speech characteristics:
 #     - Low RMS (reduced vocal effort)
 #     - Low RMS std (monotone, flat affect)
@@ -94,7 +94,7 @@ def _score_from_features(f: dict) -> dict:
     zcr_score = min(zcr_deviation, 1.0)
 
     # ── Composite depression index (weighted sum over all 6 features, in [0, 1]) ──
-    # Weights reflect relative clinical informativeness (Cummins et al. 2015):
+    # Manually selected engineering weights (not clinically validated):
     #   [energy, variability, brightness, rolloff, silence, zcr]
     weights = np.array([0.20, 0.20, 0.15, 0.15, 0.20, 0.10])
     components = np.array([energy_score, variability_score,

@@ -1,3 +1,10 @@
+"""Legacy exploratory training utility.
+
+The checked-in feature rows are constructed/class-conditioned engineering
+inputs, not an independent clinical validation dataset. Outputs from this
+script must not be reported as diagnostic accuracy or submission evidence.
+"""
+
 import os
 import csv
 import torch
