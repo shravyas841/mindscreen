@@ -129,6 +129,22 @@ def test_supplied_audio_is_explicit():
     assert result["audio_features"] == features
 
 
+def test_raw_audio_without_descriptors_uses_missing_audio_policy():
+    result = fusion_service.get_fused_prediction(
+        [0] * 9,
+        "I had an ordinary day.",
+        audio_base64="data:audio/webm;base64,YXVkaW8=",
+    )
+    assert result["audio_available"] is False
+    assert result["audio_features"] is None
+    assert get_audio_prediction(audio_base64="YXVkaW8=")["probabilities"] == {
+        "minimal": 0.25,
+        "mild": 0.45,
+        "moderate": 0.20,
+        "severe": 0.10,
+    }
+
+
 def test_phq_endpoint_item9_forces_high_priority_tier():
     response = asyncio.run(phq_router.submit_phq(
         PHQSubmitRequest(answers=[0, 0, 0, 0, 0, 0, 0, 0, 1]),

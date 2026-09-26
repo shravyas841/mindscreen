@@ -96,5 +96,5 @@ def get_fused_prediction(
         "resource_display_flag": resource_display,
         "shap_data":             text_result["shap_data"],
         "audio_features":        audio_features,
-        "audio_available":       audio_features is not None or bool(audio_base64),
+        "audio_available":       audio_features is not None,
     }

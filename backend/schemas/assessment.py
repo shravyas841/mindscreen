@@ -20,7 +20,7 @@ class FusedPredictRequest(BaseModel):
     answers: conlist(int, min_length=9, max_length=9) # type: ignore
     text: str
     audio_features: Optional[AudioFeatures] = None   # real features from Web Audio API
-    audio_base64: Optional[str] = None               # DEPRECATED: payload-size fallback
+    audio_base64: Optional[str] = None               # Deprecated compatibility field; not scored
 
 class RiskResponse(BaseModel):
     risk_level: str
