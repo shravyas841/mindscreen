@@ -25,7 +25,7 @@ from services.phq_service import calculate_phq_score
 from services.audio_service import get_audio_prediction
 from services.negation_service import detect_crisis_intent
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks", "historical")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── 1. HRE Adversarial Masking Scenarios ──────────────────────────────────────

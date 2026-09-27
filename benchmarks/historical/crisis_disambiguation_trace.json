@@ -1,0 +1,254 @@
+[
+  {
+    "id": "S1",
+    "text": "I want to kill myself, I cannot handle this.",
+    "true_class": "Crisis",
+    "naive": {
+      "flagged": true,
+      "classification": "TP"
+    },
+    "scope": {
+      "flagged": true,
+      "matched_trigger": "kill myself",
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.98,
+      "classification": "TP"
+    }
+  },
+  {
+    "id": "S2",
+    "text": "I feel so hopeless and worthless every day.",
+    "true_class": "Crisis",
+    "naive": {
+      "flagged": true,
+      "classification": "TP"
+    },
+    "scope": {
+      "flagged": true,
+      "matched_trigger": "hopeless",
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.82,
+      "classification": "TP"
+    }
+  },
+  {
+    "id": "S3",
+    "text": "I am going to end my life tonight.",
+    "true_class": "Crisis",
+    "naive": {
+      "flagged": true,
+      "classification": "TP"
+    },
+    "scope": {
+      "flagged": true,
+      "matched_trigger": "end my life",
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.98,
+      "classification": "TP"
+    }
+  },
+  {
+    "id": "S4",
+    "text": "There is no reason to live for me.",
+    "true_class": "Crisis",
+    "naive": {
+      "flagged": false,
+      "classification": "FN"
+    },
+    "scope": {
+      "flagged": true,
+      "matched_trigger": "no reason to live",
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.98,
+      "classification": "TP"
+    }
+  },
+  {
+    "id": "S5",
+    "text": "Thinking about suicide constantly.",
+    "true_class": "Crisis",
+    "naive": {
+      "flagged": true,
+      "classification": "TP"
+    },
+    "scope": {
+      "flagged": true,
+      "matched_trigger": "suicide",
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.92,
+      "classification": "TP"
+    }
+  },
+  {
+    "id": "S6",
+    "text": "I do not want to kill myself, just stressed.",
+    "true_class": "Negated",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "kill myself",
+      "negated": true,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.9,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S7",
+    "text": "I would never commit suicide, love family.",
+    "true_class": "Negated",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "commit suicide",
+      "negated": true,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.9,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S8",
+    "text": "I am not hopeless, things are getting better.",
+    "true_class": "Negated",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "hopeless",
+      "negated": true,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.85,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S9",
+    "text": "My friend told me she wanted to die.",
+    "true_class": "3rd-Party",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "die",
+      "negated": false,
+      "third_party": true,
+      "colloquial": false,
+      "confidence": 0.8,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S10",
+    "text": "Watched a movie about suicide yesterday.",
+    "true_class": "3rd-Party",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "suicide",
+      "negated": false,
+      "third_party": true,
+      "colloquial": false,
+      "confidence": 0.8,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S11",
+    "text": "We were just trying to kill time before flight.",
+    "true_class": "Idiom",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "\\bkill\\s+time\\b",
+      "negated": false,
+      "third_party": false,
+      "colloquial": true,
+      "confidence": 0.95,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S12",
+    "text": "I almost died laughing at that joke.",
+    "true_class": "Figurative",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": null,
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.0,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S13",
+    "text": "She was killing it on stage tonight.",
+    "true_class": "Idiom",
+    "naive": {
+      "flagged": true,
+      "classification": "FP"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": "\\bkilling\\s+it\\b",
+      "negated": false,
+      "third_party": false,
+      "colloquial": true,
+      "confidence": 0.95,
+      "classification": "TN"
+    }
+  },
+  {
+    "id": "S14",
+    "text": "No intention of dying, just exhausted.",
+    "true_class": "Negated",
+    "naive": {
+      "flagged": false,
+      "classification": "TN"
+    },
+    "scope": {
+      "flagged": false,
+      "matched_trigger": null,
+      "negated": false,
+      "third_party": false,
+      "colloquial": false,
+      "confidence": 0.0,
+      "classification": "TN"
+    }
+  }
+]

@@ -1,0 +1,80 @@
+{
+  "TC-1": {
+    "description": "High score masked by positive text",
+    "S": 22,
+    "q9": 1,
+    "crisis_text": false,
+    "fused_only": {
+      "tier_idx": 0,
+      "tier_name": "minimal (c0)",
+      "score": 0.56,
+      "distribution": [
+        0.5569,
+        0.1492,
+        0.097,
+        0.1969
+      ]
+    },
+    "with_hre": {
+      "tier_idx": 3,
+      "tier_name": "high-priority (c3)",
+      "c_out": 0.9,
+      "crisis_flag_CF": true,
+      "resource_flag_RD": true,
+      "rule_1_triggered": true,
+      "rule_2_triggered": true
+    }
+  },
+  "TC-2": {
+    "description": "Item 9 endorsed, low total score",
+    "S": 2,
+    "q9": 1,
+    "crisis_text": false,
+    "fused_only": {
+      "tier_idx": 0,
+      "tier_name": "minimal (c0)",
+      "score": 0.51,
+      "distribution": [
+        0.5127,
+        0.2762,
+        0.1546,
+        0.0565
+      ]
+    },
+    "with_hre": {
+      "tier_idx": 3,
+      "tier_name": "high-priority (c3)",
+      "c_out": 0.9,
+      "crisis_flag_CF": true,
+      "resource_flag_RD": true,
+      "rule_1_triggered": false,
+      "rule_2_triggered": true
+    }
+  },
+  "TC-3": {
+    "description": "Crisis keyword in text, low PHQ-9",
+    "S": 2,
+    "q9": 0,
+    "crisis_text": true,
+    "fused_only": {
+      "tier_idx": 3,
+      "tier_name": "high-priority (c3)",
+      "score": 0.41,
+      "distribution": [
+        0.2417,
+        0.2256,
+        0.1262,
+        0.4066
+      ]
+    },
+    "with_hre": {
+      "tier_idx": 3,
+      "tier_name": "high-priority (c3)",
+      "c_out": 0.9,
+      "crisis_flag_CF": true,
+      "resource_flag_RD": true,
+      "rule_1_triggered": false,
+      "rule_2_triggered": true
+    }
+  }
+}

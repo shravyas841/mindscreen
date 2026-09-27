@@ -220,10 +220,10 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
             </div>
           )}
 
-          {/* Section 4: Calibrated Probability Distribution */}
+          {/* Section 4: Heuristic score distribution */}
           <div>
             <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-              4. Calibrated Probability Distribution (Temperature-Scaled T=1.20)
+              4. Heuristic Score Distribution (Temperature Transform T=1.20)
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               {Object.entries(result.probabilities).map(([tier, prob]) => (

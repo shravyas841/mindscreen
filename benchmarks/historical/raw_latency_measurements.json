@@ -1,0 +1,50 @@
+{
+  "measurement_environment": {
+    "os": "Windows (x86_64)",
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "timer": "time.perf_counter()",
+    "memory_tracker": "tracemalloc peak heap"
+  },
+  "components": {
+    "phq9_mapping": {
+      "mean_ms": 0.03,
+      "std_ms": 0.01,
+      "p95_ms": 0.04,
+      "min_ms": 0.02,
+      "max_ms": 0.06,
+      "peak_heap_kb": 4.34,
+      "runs": 50,
+      "warmup": 10
+    },
+    "acoustic_scoring": {
+      "mean_ms": 0.17,
+      "std_ms": 0.09,
+      "p95_ms": 0.36,
+      "min_ms": 0.11,
+      "max_ms": 0.67,
+      "peak_heap_kb": 1168.79,
+      "runs": 50,
+      "warmup": 10
+    },
+    "crisis_negation_filter": {
+      "mean_ms": 0.13,
+      "std_ms": 0.05,
+      "p95_ms": 0.24,
+      "min_ms": 0.07,
+      "max_ms": 0.27,
+      "peak_heap_kb": 1023.17,
+      "runs": 50,
+      "warmup": 10
+    },
+    "full_local_screening_pipeline": {
+      "mean_ms": 0.57,
+      "std_ms": 0.22,
+      "p95_ms": 0.83,
+      "min_ms": 0.35,
+      "max_ms": 1.54,
+      "peak_heap_kb": 1036.34,
+      "runs": 50,
+      "warmup": 10
+    }
+  }
+}

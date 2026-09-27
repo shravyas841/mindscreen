@@ -5,7 +5,7 @@ an engineering safeguard, not a clinically validated suicide-risk model.
 """
 
 import re
-from typing import Any, Dict, Iterable, Match, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, Match, Optional, Tuple
 
 
 AFFIRMATIVE_SPECIAL = [
@@ -67,6 +67,25 @@ def _first_match(patterns: Iterable[str], text: str) -> Optional[Tuple[str, Matc
     return None
 
 
+def _ordered_matches(patterns: Iterable[str], text: str) -> Iterator[Match[str]]:
+    """Yield all matches in text order, independent of pattern-list order."""
+    matches = [
+        match
+        for pattern in patterns
+        for match in re.finditer(pattern, text, flags=re.IGNORECASE)
+    ]
+    yield from sorted(matches, key=lambda match: (match.start(), match.end()))
+
+
+def _mask_patterns(patterns: Iterable[str], text: str) -> Tuple[str, Optional[Match[str]]]:
+    """Blank matched spans while retaining character offsets for scope checks."""
+    matches = list(_ordered_matches(patterns, text))
+    masked = list(text)
+    for match in matches:
+        masked[match.start():match.end()] = " " * (match.end() - match.start())
+    return "".join(masked), (matches[0] if matches else None)
+
+
 def _inside_quotes(text: str, position: int) -> bool:
     prefix = text[:position]
     return (prefix.count('"') % 2 == 1) or (prefix.count("“") > prefix.count("”"))
@@ -91,37 +110,29 @@ def detect_crisis_intent(text: str) -> Dict[str, Any]:
     if not clean_text:
         return _result(False)
 
-    special = _first_match(AFFIRMATIVE_SPECIAL, clean_text)
-    if special:
-        return _result(True, special[1].group(0))
-
-    negated = _first_match(NEGATED_CRISIS, clean_text)
-    if negated:
-        return _result(False, negated[1].group(0), negated=True)
+    # Mask only the negated span and continue. An earlier genuine negation must
+    # not suppress a later, separately stated first-person affirmative intent.
+    searchable, negated_match = _mask_patterns(NEGATED_CRISIS, clean_text)
 
     attributed = _first_match(THIRD_PARTY_OR_QUOTED, clean_text)
-    if attributed and not _first_match(AFFIRMATIVE_SELF_DIRECTED, clean_text):
-        return _result(False, attributed[1].group(0), third_party=True)
 
     # Mask idioms rather than returning early; later clauses still get checked.
-    searchable = clean_text
-    idiom_match: Optional[Match[str]] = None
-    for pattern in BENIGN_IDIOMS:
-        matches = list(re.finditer(pattern, searchable, flags=re.IGNORECASE))
-        if matches and idiom_match is None:
-            idiom_match = matches[0]
-        for match in reversed(matches):
-            searchable = searchable[:match.start()] + (" " * (match.end() - match.start())) + searchable[match.end():]
+    searchable, idiom_match = _mask_patterns(BENIGN_IDIOMS, searchable)
 
-    affirmative = _first_match(AFFIRMATIVE_SELF_DIRECTED, searchable)
-    if affirmative:
-        match = affirmative[1]
+    quoted_match: Optional[Match[str]] = None
+    affirmative_patterns = [*AFFIRMATIVE_SPECIAL, *AFFIRMATIVE_SELF_DIRECTED]
+    for match in _ordered_matches(affirmative_patterns, searchable):
         if _inside_quotes(clean_text, match.start()):
-            return _result(False, match.group(0), third_party=True)
+            quoted_match = quoted_match or match
+            continue
         return _result(True, match.group(0))
 
     if attributed:
         return _result(False, attributed[1].group(0), third_party=True)
+    if quoted_match:
+        return _result(False, quoted_match.group(0), third_party=True)
+    if negated_match:
+        return _result(False, negated_match.group(0), negated=True)
     if idiom_match:
         return _result(False, idiom_match.group(0), colloquial=True)
     return _result(False)

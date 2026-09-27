@@ -1,0 +1,627 @@
+{
+  "P1": {
+    "name": "P1: High Symptom Burden (S >= 20)",
+    "vectors": {
+      "pQ": [
+        0.0,
+        0.05,
+        0.15,
+        0.8
+      ],
+      "pT": [
+        0.05,
+        0.05,
+        0.05,
+        0.85
+      ],
+      "pA": [
+        0.03,
+        0.13,
+        0.46,
+        0.38
+      ]
+    },
+    "schemes": {
+      "Equal": {
+        "convex_fused_vector": [
+          0.0267,
+          0.0766,
+          0.2198,
+          0.6768
+        ],
+        "temperature_softened_vector": [
+          0.0417,
+          0.1004,
+          0.2415,
+          0.6165
+        ],
+        "s_F": 0.62,
+        "s_F_precise": 0.6165,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Text-Dom": {
+        "convex_fused_vector": [
+          0.036,
+          0.066,
+          0.152,
+          0.746
+        ],
+        "temperature_softened_vector": [
+          0.0541,
+          0.0897,
+          0.1797,
+          0.6765
+        ],
+        "s_F": 0.68,
+        "s_F_precise": 0.6765,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Audio-Dom": {
+        "convex_fused_vector": [
+          0.028,
+          0.098,
+          0.316,
+          0.558
+        ],
+        "temperature_softened_vector": [
+          0.0426,
+          0.121,
+          0.3209,
+          0.5155
+        ],
+        "s_F": 0.52,
+        "s_F_precise": 0.5155,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "PHQ-Dom": {
+        "convex_fused_vector": [
+          0.016,
+          0.066,
+          0.192,
+          0.726
+        ],
+        "temperature_softened_vector": [
+          0.0276,
+          0.0899,
+          0.219,
+          0.6634
+        ],
+        "s_F": 0.66,
+        "s_F_precise": 0.6634,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "MindScreen": {
+        "convex_fused_vector": [
+          0.034,
+          0.074,
+          0.193,
+          0.699
+        ],
+        "temperature_softened_vector": [
+          0.0511,
+          0.0976,
+          0.217,
+          0.6343
+        ],
+        "s_F": 0.63,
+        "s_F_precise": 0.6343,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      }
+    }
+  },
+  "P2": {
+    "name": "P2: Concordant Minimal",
+    "vectors": {
+      "pQ": [
+        0.8,
+        0.15,
+        0.05,
+        0.0
+      ],
+      "pT": [
+        0.9,
+        0.05,
+        0.03,
+        0.02
+      ],
+      "pA": [
+        0.52,
+        0.34,
+        0.11,
+        0.03
+      ]
+    },
+    "schemes": {
+      "Equal": {
+        "convex_fused_vector": [
+          0.7402,
+          0.1799,
+          0.0633,
+          0.0167
+        ],
+        "temperature_softened_vector": [
+          0.6762,
+          0.208,
+          0.0871,
+          0.0287
+        ],
+        "s_F": 0.68,
+        "s_F_precise": 0.6762,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.68
+      },
+      "Text-Dom": {
+        "convex_fused_vector": [
+          0.804,
+          0.128,
+          0.05,
+          0.018
+        ],
+        "temperature_softened_vector": [
+          0.7368,
+          0.1593,
+          0.0728,
+          0.0311
+        ],
+        "s_F": 0.74,
+        "s_F_precise": 0.7368,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.74
+      },
+      "Audio-Dom": {
+        "convex_fused_vector": [
+          0.652,
+          0.244,
+          0.082,
+          0.022
+        ],
+        "temperature_softened_vector": [
+          0.596,
+          0.2627,
+          0.1059,
+          0.0354
+        ],
+        "s_F": 0.6,
+        "s_F_precise": 0.596,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.6
+      },
+      "PHQ-Dom": {
+        "convex_fused_vector": [
+          0.764,
+          0.168,
+          0.058,
+          0.01
+        ],
+        "temperature_softened_vector": [
+          0.7009,
+          0.1984,
+          0.0818,
+          0.0189
+        ],
+        "s_F": 0.7,
+        "s_F_precise": 0.7009,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.7
+      },
+      "MindScreen": {
+        "convex_fused_vector": [
+          0.766,
+          0.157,
+          0.058,
+          0.019
+        ],
+        "temperature_softened_vector": [
+          0.6997,
+          0.1868,
+          0.0814,
+          0.0321
+        ],
+        "s_F": 0.7,
+        "s_F_precise": 0.6997,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.7
+      }
+    }
+  },
+  "P3": {
+    "name": "P3: Masked Affect",
+    "vectors": {
+      "pQ": [
+        0.0,
+        0.05,
+        0.15,
+        0.8
+      ],
+      "pT": [
+        0.9,
+        0.05,
+        0.03,
+        0.02
+      ],
+      "pA": [
+        0.32,
+        0.45,
+        0.19,
+        0.04
+      ]
+    },
+    "schemes": {
+      "Equal": {
+        "convex_fused_vector": [
+          0.4072,
+          0.1832,
+          0.1232,
+          0.2864
+        ],
+        "temperature_softened_vector": [
+          0.3803,
+          0.1955,
+          0.1405,
+          0.2837
+        ],
+        "s_F": 0.38,
+        "s_F_precise": 0.3803,
+        "raw_class_idx": 0,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Text-Dom": {
+        "convex_fused_vector": [
+          0.604,
+          0.13,
+          0.086,
+          0.18
+        ],
+        "temperature_softened_vector": [
+          0.5436,
+          0.1511,
+          0.1071,
+          0.1982
+        ],
+        "s_F": 0.54,
+        "s_F_precise": 0.5436,
+        "raw_class_idx": 0,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Audio-Dom": {
+        "convex_fused_vector": [
+          0.372,
+          0.29,
+          0.15,
+          0.188
+        ],
+        "temperature_softened_vector": [
+          0.3511,
+          0.2853,
+          0.1647,
+          0.1988
+        ],
+        "s_F": 0.35,
+        "s_F_precise": 0.3511,
+        "raw_class_idx": 0,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "PHQ-Dom": {
+        "convex_fused_vector": [
+          0.244,
+          0.13,
+          0.134,
+          0.492
+        ],
+        "temperature_softened_vector": [
+          0.2505,
+          0.1482,
+          0.152,
+          0.4493
+        ],
+        "s_F": 0.45,
+        "s_F_precise": 0.4493,
+        "raw_class_idx": 3,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "MindScreen": {
+        "convex_fused_vector": [
+          0.546,
+          0.17,
+          0.102,
+          0.182
+        ],
+        "temperature_softened_vector": [
+          0.4937,
+          0.1867,
+          0.122,
+          0.1976
+        ],
+        "s_F": 0.49,
+        "s_F_precise": 0.4937,
+        "raw_class_idx": 0,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      }
+    }
+  },
+  "P4": {
+    "name": "P4: Somatic Flatness",
+    "vectors": {
+      "pQ": [
+        0.1,
+        0.7,
+        0.15,
+        0.05
+      ],
+      "pT": [
+        0.9,
+        0.05,
+        0.03,
+        0.02
+      ],
+      "pA": [
+        0.03,
+        0.12,
+        0.43,
+        0.42
+      ]
+    },
+    "schemes": {
+      "Equal": {
+        "convex_fused_vector": [
+          0.3439,
+          0.2898,
+          0.2032,
+          0.1632
+        ],
+        "temperature_softened_vector": [
+          0.328,
+          0.2843,
+          0.2115,
+          0.1762
+        ],
+        "s_F": 0.33,
+        "s_F_precise": 0.328,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.33
+      },
+      "Text-Dom": {
+        "convex_fused_vector": [
+          0.566,
+          0.194,
+          0.134,
+          0.106
+        ],
+        "temperature_softened_vector": [
+          0.5106,
+          0.2092,
+          0.1537,
+          0.1264
+        ],
+        "s_F": 0.51,
+        "s_F_precise": 0.5106,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.51
+      },
+      "Audio-Dom": {
+        "convex_fused_vector": [
+          0.218,
+          0.222,
+          0.294,
+          0.266
+        ],
+        "temperature_softened_vector": [
+          0.2233,
+          0.2267,
+          0.2865,
+          0.2636
+        ],
+        "s_F": 0.29,
+        "s_F_precise": 0.2865,
+        "raw_class_idx": 2,
+        "hre_triggered": false,
+        "final_tier": 2,
+        "c_out": 0.29
+      },
+      "PHQ-Dom": {
+        "convex_fused_vector": [
+          0.246,
+          0.454,
+          0.182,
+          0.118
+        ],
+        "temperature_softened_vector": [
+          0.2508,
+          0.418,
+          0.1951,
+          0.136
+        ],
+        "s_F": 0.42,
+        "s_F_precise": 0.418,
+        "raw_class_idx": 1,
+        "hre_triggered": false,
+        "final_tier": 1,
+        "c_out": 0.42
+      },
+      "MindScreen": {
+        "convex_fused_vector": [
+          0.479,
+          0.201,
+          0.174,
+          0.146
+        ],
+        "temperature_softened_vector": [
+          0.4373,
+          0.2121,
+          0.1881,
+          0.1625
+        ],
+        "s_F": 0.44,
+        "s_F_precise": 0.4373,
+        "raw_class_idx": 0,
+        "hre_triggered": false,
+        "final_tier": 0,
+        "c_out": 0.44
+      }
+    }
+  },
+  "P5": {
+    "name": "P5: Implicit Ideation",
+    "vectors": {
+      "pQ": [
+        0.8,
+        0.15,
+        0.05,
+        0.0
+      ],
+      "pT": [
+        0.1,
+        0.15,
+        0.7,
+        0.05
+      ],
+      "pA": [
+        0.13,
+        0.48,
+        0.32,
+        0.07
+      ]
+    },
+    "schemes": {
+      "Equal": {
+        "convex_fused_vector": [
+          0.3431,
+          0.2599,
+          0.357,
+          0.04
+        ],
+        "temperature_softened_vector": [
+          0.334,
+          0.265,
+          0.3453,
+          0.0557
+        ],
+        "s_F": 0.35,
+        "s_F_precise": 0.3453,
+        "raw_class_idx": 2,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Text-Dom": {
+        "convex_fused_vector": [
+          0.246,
+          0.216,
+          0.494,
+          0.044
+        ],
+        "temperature_softened_vector": [
+          0.2549,
+          0.2287,
+          0.4557,
+          0.0607
+        ],
+        "s_F": 0.46,
+        "s_F_precise": 0.4557,
+        "raw_class_idx": 2,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "Audio-Dom": {
+        "convex_fused_vector": [
+          0.258,
+          0.348,
+          0.342,
+          0.052
+        ],
+        "temperature_softened_vector": [
+          0.2624,
+          0.3367,
+          0.3319,
+          0.0691
+        ],
+        "s_F": 0.34,
+        "s_F_precise": 0.3367,
+        "raw_class_idx": 1,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "PHQ-Dom": {
+        "convex_fused_vector": [
+          0.526,
+          0.216,
+          0.234,
+          0.024
+        ],
+        "temperature_softened_vector": [
+          0.485,
+          0.231,
+          0.247,
+          0.037
+        ],
+        "s_F": 0.49,
+        "s_F_precise": 0.485,
+        "raw_class_idx": 0,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      },
+      "MindScreen": {
+        "convex_fused_vector": [
+          0.249,
+          0.249,
+          0.456,
+          0.046
+        ],
+        "temperature_softened_vector": [
+          0.2564,
+          0.2564,
+          0.4245,
+          0.0628
+        ],
+        "s_F": 0.42,
+        "s_F_precise": 0.4245,
+        "raw_class_idx": 2,
+        "hre_triggered": true,
+        "final_tier": 3,
+        "c_out": 0.9
+      }
+    }
+  }
+}

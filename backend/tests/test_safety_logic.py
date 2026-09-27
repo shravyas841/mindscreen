@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from database import Base
 from backend.main import app
+from evidence_cases import CRISIS_CONFORMANCE_CASES
 from routers import auth as auth_router
 from routers import phq as phq_router
 from routers import predict as predict_router
@@ -48,26 +49,11 @@ def deterministic_text_branch(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("text", "expected"),
-    [
-        ("I want to die.", True),
-        ("I want to end my life.", True),
-        ("I don't want to be alive anymore.", True),
-        ("I no longer want to live.", True),
-        ("I plan to overdose.", True),
-        ("I was killing it at work, but now I want to die.", True),
-        ("My friend abandoned me and now I want to die.", True),
-        ("I am not okay and I want to die.", True),
-        ("I don't want to die.", False),
-        ("I do not want to kill myself.", False),
-        ("My friend said they want to die.", False),
-        ("She told me she wants to kill herself.", False),
-        ('My friend said "I want to die."', False),
-        ("I was killing it at work today.", False),
-        ("That exam killed me.", False),
-    ],
+    ("_case_id", "text", "expected", "_category"),
+    CRISIS_CONFORMANCE_CASES,
+    ids=[case[0] for case in CRISIS_CONFORMANCE_CASES],
 )
-def test_crisis_language_scope(text, expected):
+def test_crisis_language_scope(_case_id, text, expected, _category):
     assert detect_crisis_intent(text)["is_crisis"] is expected
 
 
@@ -93,6 +79,17 @@ def test_hre_item9_sets_crisis_and_resources():
 
 def test_hre_affirmative_text_sets_crisis_and_resources():
     result = fusion_service.get_fused_prediction([0] * 9, "I want to die.")
+    assert result["risk_level"] == "severe"
+    assert result["priority_score"] >= 0.90
+    assert result["crisis_flag"] is True
+    assert result["resource_display_flag"] is True
+
+
+def test_hre_mixed_negation_then_affirmative_sets_crisis_and_resources():
+    result = fusion_service.get_fused_prediction(
+        [0] * 9,
+        "I do not want to die, but now I want to kill myself.",
+    )
     assert result["risk_level"] == "severe"
     assert result["priority_score"] >= 0.90
     assert result["crisis_flag"] is True

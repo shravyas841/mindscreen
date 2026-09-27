@@ -18,8 +18,10 @@ from pathlib import Path
 
 import numpy as np
 
+from evidence_cases import CRISIS_CONFORMANCE_CASES
 from services import fusion_service
 from services.audio_service import get_audio_prediction
+from services.calibration_service import DEFAULT_TEMPERATURE
 from services.negation_service import detect_crisis_intent
 from services.phq_service import calculate_phq_score
 
@@ -156,28 +158,12 @@ HRE_CASES = {
         "text": "I had an ordinary day.",
         "expected_trigger": "none",
     },
+    "HRE-5-mixed-negation-then-affirmative": {
+        "answers": [0] * 9,
+        "text": "I do not want to die, but now I want to kill myself.",
+        "expected_trigger": "later affirmative self-directed crisis language",
+    },
 }
-
-CRISIS_CORPUS = [
-    ("A1", "I want to die.", True, "affirmative"),
-    ("A2", "I want to end my life.", True, "affirmative"),
-    ("A3", "I don't want to be alive anymore.", True, "affirmative"),
-    ("A4", "I no longer want to live.", True, "affirmative"),
-    ("A5", "I plan to overdose.", True, "affirmative"),
-    ("A6", "I was killing it at work, but now I want to die.", True, "mixed-clause"),
-    ("A7", "My friend abandoned me and now I want to die.", True, "mixed-clause"),
-    ("A8", "I am not okay and I want to die.", True, "unrelated-negation"),
-    ("N1", "I don't want to die.", False, "negation"),
-    ("N2", "I do not want to kill myself.", False, "negation"),
-    ("N3", "I would never commit suicide.", False, "negation"),
-    ("T1", "My friend said they want to die.", False, "third-party"),
-    ("T2", "She told me she wants to kill herself.", False, "third-party"),
-    ("Q1", 'My friend said "I want to die."', False, "quotation"),
-    ("I1", "I was killing it at work today.", False, "idiom"),
-    ("I2", "That exam killed me.", False, "idiom"),
-    ("I3", "We were trying to kill time.", False, "idiom"),
-]
-
 
 def run_hre_cases() -> dict:
     output = {}
@@ -202,7 +188,7 @@ def run_hre_cases() -> dict:
 def run_crisis_corpus() -> dict:
     trace = []
     naive_terms = ("die", "kill", "suicide", "self harm", "self-harm", "overdose")
-    for case_id, text, expected, category in CRISIS_CORPUS:
+    for case_id, text, expected, category in CRISIS_CONFORMANCE_CASES:
         scoped = detect_crisis_intent(text)["is_crisis"]
         naive = any(term in text.lower() for term in naive_terms)
         trace.append({
@@ -224,14 +210,20 @@ def run_crisis_corpus() -> dict:
         fn = sum((not row[key]) and row["expected_crisis"] for row in trace)
         return {
             "tp": tp, "tn": tn, "fp": fp, "fn": fn,
-            "affirmative_detection_rate": tp / positives,
-            "false_positive_rate": fp / negatives,
-            "accuracy": (tp + tn) / len(trace),
+            "positive_case_agreement_rate": tp / positives,
+            "negative_case_false_flag_rate": fp / negatives,
+            "exact_set_agreement_rate": (tp + tn) / len(trace),
         }
 
     return {
-        "description": "Constructed rule-verification corpus; not a clinical dataset.",
+        "description": (
+            "Constructed, team-labeled crisis-language conformance set for exact-set "
+            "rule verification; not participant data or clinical evaluation."
+        ),
+        "label_source": "Team-authored expected labels defined in backend/evidence_cases.py.",
         "case_count": len(trace),
+        "expected_positive_count": positives,
+        "expected_negative_count": negatives,
         "trace": trace,
         "naive_metrics": metrics("naive_flag"),
         "detector_metrics": metrics("detector_flag"),
@@ -368,13 +360,12 @@ def run_latency() -> dict:
 
 def main() -> None:
     weight_sensitivity = run_weight_sensitivity()
-    WEIGHT_OUTPUT.write_text(json.dumps(weight_sensitivity, indent=2), encoding="utf-8")
     changed_cases = [
         name for name, case in weight_sensitivity["cases"].items()
         if case["raw_tier_changes_across_configurations"]
     ]
     evidence = {
-        "evidence_version": 2,
+        "evidence_version": 3,
         "network_calls": False,
         "text_branch": "fixed deterministic local score vector; hosted NLP excluded",
         "evidence_scope": {
@@ -394,16 +385,16 @@ def main() -> None:
                 "benchmarks/current_weight_sensitivity.json",
             ],
             "historical_obsolete_artifacts": [
-                "benchmarks/p1_p5_sensitivity_raw.json",
-                "benchmarks/raw_latency_measurements.json",
-                "benchmarks/latency_raw_trace.json",
-                "benchmarks/hre_masking_scenarios_raw.json",
-                "benchmarks/crisis_disambiguation_trace.json",
+                "benchmarks/historical/p1_p5_sensitivity_raw.json",
+                "benchmarks/historical/raw_latency_measurements.json",
+                "benchmarks/historical/latency_raw_trace.json",
+                "benchmarks/historical/hre_masking_scenarios_raw.json",
+                "benchmarks/historical/crisis_disambiguation_trace.json",
             ],
         },
         "implementation_facts": {
             "production_fusion_weights": fusion_service.DEFAULT_FUSION_WEIGHTS,
-            "temperature": 1.20,
+            "temperature": DEFAULT_TEMPERATURE,
             "temperature_status": "heuristic score transformation; not statistically calibrated",
             "missing_audio_prior": [0.25, 0.45, 0.20, 0.10],
             "missing_audio_weight_is_renormalized": False,
@@ -432,9 +423,42 @@ def main() -> None:
         },
         "local_latency": run_latency(),
     }
+    detector_metrics = evidence["crisis_language_evaluation"]["detector_metrics"]
+    if detector_metrics["fp"] or detector_metrics["fn"]:
+        raise RuntimeError(
+            "Crisis conformance validation failed: "
+            f"fp={detector_metrics['fp']} fn={detector_metrics['fn']}"
+        )
+    if evidence["weight_sensitivity"]["case_count"] != len(SENSITIVITY_CASES):
+        raise RuntimeError("Weight-sensitivity case count is inconsistent.")
+    if evidence["implementation_facts"]["production_fusion_weights"] != {
+        "text": 0.50, "audio": 0.30, "phq": 0.20
+    }:
+        raise RuntimeError("Production fusion weights changed unexpectedly.")
+    missing_audio = get_audio_prediction()["probabilities"]
+    if list(missing_audio.values()) != evidence["implementation_facts"]["missing_audio_prior"]:
+        raise RuntimeError("Missing-audio prior changed unexpectedly.")
+    hre = evidence["hre_scenarios"]
+    expected_hre = {
+        "HRE-1-high-score-only": ("severe", False, True),
+        "HRE-2-item9": ("severe", True, True),
+        "HRE-3-text": ("severe", True, True),
+        "HRE-4-no-trigger": ("minimal", False, False),
+        "HRE-5-mixed-negation-then-affirmative": ("severe", True, True),
+    }
+    for name, (risk_level, crisis_flag, resource_flag) in expected_hre.items():
+        actual = hre[name]
+        if (
+            actual["risk_level"],
+            actual["crisis_flag"],
+            actual["resource_display_flag"],
+        ) != (risk_level, crisis_flag, resource_flag):
+            raise RuntimeError(f"HRE validation failed for {name}.")
+    WEIGHT_OUTPUT.write_text(json.dumps(weight_sensitivity, indent=2), encoding="utf-8")
     OUTPUT.write_text(json.dumps(evidence, indent=2), encoding="utf-8")
     print(f"Wrote {WEIGHT_OUTPUT}")
     print(f"Wrote {OUTPUT}")
+    print("Validated authoritative deterministic evidence.")
     print(json.dumps({
         "hre_scenarios": evidence["hre_scenarios"],
         "crisis_metrics": evidence["crisis_language_evaluation"]["detector_metrics"],

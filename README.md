@@ -1,7 +1,7 @@
 # 🧠 MindScreen: AI-Powered Multimodal Mental Health Screening Platform
 
 > **RVITM Major Project (BCS685)**  
-> *An intelligent, multimodal mental health assessment web platform combining clinical questionnaires, transformer-based NLP, and acoustic voice analysis for early depression detection and risk triaging.*
+> *A multimodal mental-health screening-support engineering prototype combining PHQ-9 responses, emotion-derived text scores, and heuristic acoustic descriptors.*
 
 ---
 
@@ -94,7 +94,7 @@ $$ \text{Final Score} = (0.50 \times \text{Text}) + (0.30 \times \text{Audio}) +
 ### **Machine Learning & Signal Processing**
 - **NLP Transformer**: Hosted `j-hartmann/emotion-english-distilroberta-base`, mapped from emotion labels to screening tiers
 - **Audio Processing**: Browser Web Audio API descriptors scored by a hand-designed server-side heuristic
-- **Dataset status**: No repository evidence establishes training or validation on DAIC-WOZ acoustic data
+- **Dataset status**: The current pipeline does not use DAIC-WOZ. Invalid historical experiments are quarantined under `historical/invalid_daic_woz/` and are not evidence.
 - **Interpretability status**: Displayed lexical values are deterministic keyword indicators, not SHAP
 
 ---
@@ -141,7 +141,7 @@ major project antigravity/
 
 Ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v18 or higher)
-- [Python](https://www.python.org/) (v3.11 recommended)
+- [Python](https://www.python.org/) (v3.12 recommended for the frozen evidence environment)
 
 ---
 
@@ -160,8 +160,8 @@ python -m venv venv
 # Mac/Linux:
 # source venv/bin/activate
 
-# Install dependencies
-pip install -r backend/requirements.txt
+# Install the exact audited runtime/test environment
+pip install -r requirements-lock.txt
 
 # Run the FastAPI server
 python main.py
@@ -213,12 +213,12 @@ npm run dev
 ## 📜 License & Acknowledgments
 
 Developed as part of the **RVITM Major Project (BCS685)**.  
-Uses the hosted Hugging Face `j-hartmann/emotion-english-distilroberta-base` model as an affective proxy. The repository contains DAIC-WOZ label/download experiments, but the production audio path is not trained or validated on DAIC-WOZ.
+Uses the hosted Hugging Face `j-hartmann/emotion-english-distilroberta-base` model as an affective proxy. Provider behavior and the served model revision are not pinned, so hosted inference is not treated as deterministic evidence. The production audio path is a hand-designed heuristic and is not trained or validated on DAIC-WOZ. Invalid historical DAIC-WOZ scripts are quarantined and excluded from current evidence.
 
 ## Verification
 
 ```bash
-pip install -r backend/requirements-dev.txt
+pip install -r backend/requirements-lock.txt
 pytest
 python backend/run_submission_evidence.py
 cd frontend
@@ -226,4 +226,4 @@ npm test
 npm run build
 ```
 
-The evidence script writes `benchmarks/submission_evidence.json`. It includes current implementation facts, deterministic HRE cases, a constructed crisis-language corpus, and a descriptive five-configuration weight-sensitivity analysis over constructed modality-score cases. The sensitivity analysis reports raw fusion separately from HRE and is not an accuracy study or weight optimization. Timing values are in-process local function microbenchmarks, not HTTP, database, browser extraction, hosted-API, network, cloud, or frontend-rendering measurements.
+The evidence command writes and validates `benchmarks/submission_evidence.json` and `benchmarks/current_weight_sensitivity.json`. It includes current implementation facts, deterministic HRE cases, a constructed/team-labeled crisis-language conformance set, and a descriptive five-configuration weight-sensitivity analysis over constructed modality-score cases. The sensitivity analysis reports raw fusion separately from HRE and is not an accuracy study or weight optimization. Timing values are local in-process component microbenchmarks, not HTTP, database, browser extraction, hosted-API, network, cloud, frontend-rendering, cold-start, or concurrency measurements. Memory values are Python `tracemalloc` peak allocations, not application memory or RSS.
