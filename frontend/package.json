@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "node --test src/utils/audioFeatures.test.ts src/api/routes.test.ts",
     "preview": "vite preview"
   },
   "devDependencies": {

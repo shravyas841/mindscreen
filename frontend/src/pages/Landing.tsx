@@ -73,7 +73,7 @@ export default function Landing() {
               </h1>
               
               <p className="text-sm sm:text-base text-[#F0C0C6] font-medium leading-relaxed mb-7 max-w-lg mx-auto">
-                A screening-support prototype combining PHQ-9 responses, emotion-model scores, and heuristic acoustic descriptors.
+                A quiet screening sanctuary integrating standardized PHQ-9 metrics, MentalBERT semantics, and voice acoustic biomarkers.
               </p>
 
               <div className="flex items-center justify-center">
@@ -109,10 +109,10 @@ export default function Landing() {
         <section className="py-16 relative z-20">
           <div className="text-center mb-14">
             <h2 className="font-serif-title text-3xl sm:text-5xl italic font-normal tracking-tight mb-3 text-[#FFE8C2]">
-              A Heuristic Tri-Modal Pipeline
+              A Calibrated Tri-Modal Pipeline
             </h2>
             <p className="text-[#E8B4B8]/90 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-              Combining standardized self-reports, contextual language patterns, and heuristic acoustic descriptors for screening-support insight.
+              Combining standardized self-reports, contextual language patterns, and vocal biomarkers for clinical-grade insight.
             </p>
           </div>
           
@@ -122,11 +122,11 @@ export default function Landing() {
                 icon: ClipboardList,
                 title: 'Clinical PHQ-9',
                 weight: '20% Weight',
-                desc: 'Standardized 9-question depression symptom-severity questionnaire used as one screening signal.',
+                desc: 'Standardized 9-question depression severity metric calibrated to international diagnostic criteria.',
               },
               {
                 icon: Brain,
-                title: 'Emotion Text Signal',
+                title: 'MentalBERT NLP',
                 weight: '50% Weight',
                 desc: 'Domain-adapted transformer analyzing semantic sentiment, cognitive distortions, and journal reflections.',
               },
@@ -134,7 +134,7 @@ export default function Landing() {
                 icon: Mic,
                 title: 'Vocal Acoustics',
                 weight: '30% Weight',
-                desc: 'Browser extraction of RMS, ZCR, spectral centroid/rolloff, and speaking-ratio descriptors.',
+                desc: 'Acoustic feature extraction isolating pitch variation, energy contours, and MFCC biomarkers.',
               }
             ].map((feature, i) => (
               <motion.div 

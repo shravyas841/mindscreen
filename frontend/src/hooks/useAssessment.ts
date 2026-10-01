@@ -8,10 +8,12 @@ export const usePredictFused = () => {
       phq,
       text,
       audioFeatures,
+      audioBase64,
     }: {
       phq: PHQSubmitRequest;
       text: PredictTextRequest;
       audioFeatures?: AudioFeatures | null;
-    }) => predictFused(phq, text, audioFeatures),
+      audioBase64?: string | null;
+    }) => predictFused(phq, text, audioFeatures, audioBase64),
   });
 };

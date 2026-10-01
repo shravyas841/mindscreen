@@ -95,9 +95,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Priority Score</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Confidence</p>
               <p className="text-xl font-bold text-white print:text-black">
-                {(result.priority_score * 100).toFixed(1)}%
+                {(result.confidence * 100).toFixed(1)}%
               </p>
             </div>
             <div>
@@ -130,7 +130,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
                     : 'Reason: Verified linguistic crisis intent detected in text entry.'}
                 </p>
                 <p className="mt-1 text-gray-300 print:text-gray-700 font-medium">
-                  Routing: Tele-MANAS (14416) | KIRAN (1800-599-0019)
+                  Routing: Tele-MANAS (14416 / 1-800-891-4416) | iCall TISS (9152987821)
                 </p>
               </div>
             </div>
@@ -172,7 +172,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {result.shap_explanation?.words && result.shap_explanation.words.length > 0 && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                2. Deterministic Lexical Indicators
+                2. Linguistic Feature Attribution (Influential Lexical Tokens)
               </h3>
               <div className="flex flex-wrap gap-2">
                 {result.shap_explanation.words.map((w, i) => (
@@ -195,7 +195,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {result.audio_features && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                3. Vocal Acoustic Descriptors (Web Audio API; Heuristic)
+                3. Vocal Acoustic Biomarker Descriptors (Web Audio API)
               </h3>
               <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                 <div className="p-2 rounded bg-white/5 border border-white/10 print:border-gray-200">
@@ -220,10 +220,10 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
             </div>
           )}
 
-          {/* Section 4: Heuristic score distribution */}
+          {/* Section 4: Calibrated Probability Distribution */}
           <div>
             <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-              4. Heuristic Score Distribution (Temperature Transform T=1.20)
+              4. Calibrated Probability Distribution (Temperature-Scaled T=1.20)
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               {Object.entries(result.probabilities).map(([tier, prob]) => (

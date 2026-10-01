@@ -1,229 +1,252 @@
-# 🧠 MindScreen: AI-Powered Multimodal Mental Health Screening Platform
+# MindScreen
 
-> **RVITM Major Project (BCS685)**  
-> *A multimodal mental-health screening-support engineering prototype combining PHQ-9 responses, emotion-derived text scores, and heuristic acoustic descriptors.*
+**A Late-Fusion Depression Screening Prototype with a Rule-Based Safety Override**
 
----
+MindScreen is a web-based research prototype that combines the Patient Health Questionnaire-9 (PHQ-9), an off-the-shelf text emotion classifier, and browser-extracted acoustic descriptors through weighted late fusion to produce a preliminary depression risk tier. It is not a diagnostic tool and has not undergone clinical validation.
 
-## 📌 Executive Summary
-
-**MindScreen** is a mental-health screening-support prototype designed for preliminary screening and wellness tracking. Its **multimodal late-fusion decision architecture** integrates three independent input streams:
-
-1. 📋 **PHQ-9 Clinical Questionnaire** (Standardized medical assessment baseline)
-2. 🧠 **Hosted Emotion Classification** (DistilRoBERTa affect labels mapped heuristically to screening tiers)
-3. 🎙️ **Browser Acoustic Descriptors** (RMS, ZCR, spectral centroid/rolloff, and speaking ratio)
+Developed by Savitha G, Ruchita Saraf, Shravya Sanikere, Chandrika Lamani, and Apoorva K at RV Institute of Technology and Management, Bengaluru (RVITM Major Project BCS685).
 
 ---
 
-## ✨ Key Features
+## Overview
 
-- **Multimodal Risk Prediction Engine**: Fuses questionnaire, affective-text, and heuristic acoustic scores to generate a triaged screening tier (`Minimal`, `Mild`, `Moderate`, `High Priority`).
-- **Lexical Indicators**: Displays hand-written keyword contributions used by the fallback/display layer. These are not SHAP values or causal model explanations.
-- **Safety First & Crisis Overrides**: Instant detection of high-risk indicators or self-harm signals (PHQ-9 Q9) automatically triggers emergency helpline banners (iCall, NIMHANS).
-- **Daily Mood Tracker & CBT Exercises**: Interactive daily mood logging with trend visualization (`Recharts`) and dynamic Cognitive Behavioral Therapy (CBT) activity recommendations based on user emotional state.
-- **Assessment History & Longitudinal Tracking**: Complete historical logs allowing users to view risk progression over time with detailed probability distribution breakdowns.
-- **Modern Glassmorphism UI**: High-impact, responsive dark-mode user interface designed with fluid micro-animations for a comforting user experience.
-- **Academic Demo Mode**: The current build uses a shared demo-user bypass. JWTs are issued by login/register routes but are not enforced by protected routes; this build must not be described as secure or multi-user private.
+The system takes three inputs from a user in a single assessment session:
+
+1. Nine PHQ-9 items, each scored 0 to 3, producing a total of 0 to 27.
+2. A free-text journal entry of any length, analysed by the Hartmann DistilRoBERTa emotion classifier mapped to a four-class depression risk distribution.
+3. An optional voice recording of 10 to 30 seconds, from which six acoustic descriptors are extracted in the browser using the Web Audio API: RMS energy mean and standard deviation, zero-crossing rate mean, spectral centroid, 85-percent spectral rolloff, and speaking ratio.
+
+The three probability vectors are combined through weighted late fusion (text 0.50, audio 0.30, PHQ-9 0.20), renormalised over the modalities actually present, and passed through monotone temperature scaling (T = 1.20). A rule-based safety layer then applies three overrides:
+
+- R0: PHQ-9 tier floor. The fused tier may escalate but never falls below the severity band implied by the PHQ-9 total score.
+- R1: PHQ-9 Item 9. Any score above zero on the self-harm item forces a severe classification and sets the crisis flag.
+- R2: Crisis language. Affirmative, self-directed suicidal or self-harm language detected by the v2.1 clause-scoped filter forces the same escalation.
+
+An evaluation of the crisis-language filter on two public corpora (SDCNL test split, n = 379; a tweet corpus, n = 8 785) found that the original fixed-window filter (v1) achieved sensitivity of 22.8 and 24.2 percent respectively. The clause-scoped revision (v2 and v2.1) raised sensitivity to 55.4 and 51.3 percent (McNemar p less than 10^-10), with specificity of 75.8 and 91.7 percent. The filter remains a supplementary trigger and not a safety guarantee.
+
+A design-space analysis showed that, without overrides, the fused tier fell below the PHQ-9 severity band in 37.0, 55.3, and 85.2 percent of text-audio input configurations for PHQ-9 totals of 5-9, 10-14, and 15-19 respectively. The PHQ-9 tier floor removes this under-triage by construction.
 
 ---
 
-## 🏗️ System Architecture & Multimodal Fusion
-
-MindScreen uses a **Late Fusion (Decision-Level Fusion)** approach. When audio is skipped or fewer than five analysis frames are available, the client sends no acoustic vector and the backend applies the documented prior `[0.25, 0.45, 0.20, 0.10]` at the existing 30% weight. This missing-modality policy is heuristic and has not been statistically validated. A recording exists temporarily as an in-memory browser Blob for local playback, but the assessment payload transmits only the descriptor vector and does not persist raw audio.
+## Repository Structure
 
 ```
-                      ┌────────────────────────────────────────┐
-                      │            User Inputs                 │
-                      └───────────────────┬────────────────────┘
-                                          │
-        ┌─────────────────────────────────┼─────────────────────────────────┐
-        │                                 │                                 │
-        ▼                                 ▼                                 ▼
-┌──────────────┐                 ┌─────────────────┐               ┌────────────────┐
-│   PHQ-9      │                 │  Journal Text   │               │ Voice Recording│
-│ Questionnaire│                 │  (Free-form)    │               │ Browser stream │
-└───────┬──────┘                 └────────┬────────┘               └───────┬────────┘
-        │                                 │                                 │
-        ▼                                 ▼                                 ▼
-┌──────────────┐                 ┌─────────────────┐               ┌────────────────┐
-│ Rule-Based   │                 │ Emotion Model   │               │ Web Audio API  │
-│ Scoring      │                 │ + Rule Fallback │               │ Descriptors    │
-└───────┬──────┘                 └────────┬────────┘               └───────┬────────┘
-        │ (20% Weight)                    │ (50% Weight)                    │ (30% Weight)
-        └────────────────────────┐        │        ┌────────────────────────┘
-                                 ▼        ▼        ▼
-                      ┌────────────────────────────────────────┐
-                      │    Decision-Level Late Fusion Engine   │
-                      │  Weighted Average + Crisis Safety Check │
-                      └───────────────────┬────────────────────┘
-                                          │
-                                          ▼
-                      ┌────────────────────────────────────────┐
-                      │ Tier, Priority Score, Flags & Scores  │
-                      └────────────────────────────────────────┘
-```
-
-### Fusion Weight Distribution
-$$ \text{Final Score} = (0.50 \times \text{Text}) + (0.30 \times \text{Audio}) + (0.20 \times \text{PHQ-9}) $$
-
-> **High-Risk Escalation:** A PHQ-9 total $\ge 20$, Item 9 $>0$, or affirmative self-directed crisis language forces the internal high-priority tier and a priority score of at least 0.90. The crisis flag is set only by Item 9 or affirmative crisis language; a high total alone is not labeled acute crisis.
->
-> The API retains the legacy `risk_level: "severe"` value for this internal c3 tier; the interface displays **High Priority**. It is not a diagnosis.
-
----
-
-## 🛠️ Technology Stack
-
-### **Frontend**
-- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- **Build Tool**: [Vite 8](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (Vanilla CSS Variables, Dark Glassmorphism)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Data Visualization**: [Recharts](https://recharts.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **State & Data Fetching**: `@tanstack/react-query`, `axios`
-
-### **Backend**
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11)
-- **ASGI Server**: Uvicorn
-- **Database**: PostgreSQL (with automatic SQLite fallback for rapid local execution)
-- **ORM**: SQLAlchemy + Alembic Migrations
-- **Authentication status**: Password hashing and JWT creation exist, but protected routes currently use a shared demo-user bypass.
-- **Rate Limiting**: `slowapi`
-
-### **Machine Learning & Signal Processing**
-- **NLP Transformer**: Hosted `j-hartmann/emotion-english-distilroberta-base`, mapped from emotion labels to screening tiers
-- **Audio Processing**: Browser Web Audio API descriptors scored by a hand-designed server-side heuristic
-- **Dataset status**: The current pipeline does not use DAIC-WOZ. Invalid historical experiments are quarantined under `historical/invalid_daic_woz/` and are not evidence.
-- **Interpretability status**: Displayed lexical values are deterministic keyword indicators, not SHAP
-
----
-
-## 📂 Project Structure
-
-```
-major project antigravity/
+mindscreen/
 ├── backend/
-│   ├── main.py                  # FastAPI Application Entry & Routing
-│   ├── config.py                # Environment Configuration & Settings
-│   ├── database.py              # SQLAlchemy Database Setup & SQLite Fallback
-│   ├── models/                  # Database Schemas (User, Assessment, Mood)
-│   ├── routers/                 # API Endpoints (auth, predict, phq, mood, health)
-│   ├── services/
-│   │   ├── ml_service.py        # Hosted emotion inference, fallback, lexical indicators
-│   │   ├── audio_service.py     # Heuristic scoring of browser acoustic descriptors
-│   │   ├── fusion_service.py    # Multimodal Decision-Level Late Fusion Logic
-│   │   ├── phq_service.py       # Clinical PHQ-9 Rule-based Scoring Engine
-│   │   └── auth_service.py      # JWT Authentication & Demo-mode Security
-│   └── ml_models/               # PyTorch Model Checkpoints (.pt)
+│   ├── main.py                    FastAPI application entry point
+│   ├── config.py                  Environment settings, resolves .env from backend directory
+│   ├── database.py                SQLAlchemy setup; falls back to SQLite if PostgreSQL is unavailable
+│   ├── models/                    ORM models: User, Assessment, MoodLog
+│   ├── schemas/                   Pydantic request and response schemas
+│   ├── routers/
+│   │   ├── auth.py                Registration, login, JWT refresh
+│   │   ├── predict.py             /api/predict/text and /api/predict/fused endpoints
+│   │   ├── phq.py                 PHQ-9 submission and history
+│   │   ├── mood.py                Mood logging and trend
+│   │   ├── chat.py                Saathi companion endpoint
+│   │   └── health.py              /api/health
+│   └── services/
+│       ├── fusion_service.py      Weighted late fusion with R0/R1/R2 safety layer
+│       ├── negation_service.py    Crisis-language filter v2.1 (clause-scoped, ConText-style)
+│       ├── ml_service.py          HuggingFace emotion API call and keyword fallback
+│       ├── audio_service.py       Six-descriptor acoustic scoring from Web Audio API features
+│       ├── phq_service.py         PHQ-9 score-to-probability vector mapping
+│       └── calibration_service.py Temperature scaling, ECE, and Brier score utilities
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── App.tsx              # Main Router & Application Provider
-│   │   ├── main.tsx             # Entry point
-│   │   ├── index.css            # Dark Glassmorphism CSS Design Tokens
-│   │   ├── components/          # Reusable UI (Sidebar, Layout, Buttons, Cards)
-│   │   ├── pages/               # Pages (Landing, Register, Login, Dashboard, 
-│   │   │                        #        Assessment, Results, History, MoodTracker)
-│   │   └── api/                 # Axios Client & API Contracts
-│   ├── package.json
-│   └── vite.config.ts
+│   └── src/
+│       ├── App.tsx                Route definitions
+│       ├── pages/
+│       │   ├── Landing.tsx        Public landing page
+│       │   ├── Login.tsx          Authentication
+│       │   ├── Register.tsx       Account creation
+│       │   ├── Dashboard.tsx      Post-login home
+│       │   ├── Assessment.tsx     PHQ-9, journal, voice recording (AGC/noise suppression disabled)
+│       │   ├── Results.tsx        Risk output with SHAP word attribution
+│       │   ├── History.tsx        Past assessment timeline
+│       │   ├── MoodTracker.tsx    Daily mood logging and trend chart
+│       │   ├── SaathiChat.tsx     Saathi wellbeing companion
+│       │   └── CounselorDashboard.tsx  Counselor view
+│       ├── utils/
+│       │   └── audioFeatures.ts   Web Audio API feature extractor; returns null for recordings under 5 frames
+│       └── api/
+│           └── client.ts          Axios instance with JWT auto-refresh interceptor
 │
-├── docker-compose.yml           # Containerized Database & Deployment Setup
+├── mindscreen_code_and_evaluation/
+│   ├── evaluation/                Evaluation scripts reproducing all paper tables and figures
+│   │   ├── crisis_v1.py           Verbatim copy of the deployed v1 filter
+│   │   ├── crisis_v2.py           Evaluated clause-scoped revision
+│   │   ├── crisis_v2_1.py         v2 plus self-harm triggers (the released version)
+│   │   ├── eval_crisis.py         Table VI main rows, constructed suite, McNemar tests
+│   │   ├── eval_posthoc.py        Ablation, v2.1, v1 miss breakdown, lexicon ceiling
+│   │   ├── fusion_analysis.py     Tables IV and V, modality ablation, design-space scan
+│   │   ├── latency.py             Table VII server-side compute latency
+│   │   ├── suite.py               26-item constructed test suite
+│   │   ├── results_crisis.json    Raw evaluation results: SDCNL and Twitter corpora
+│   │   ├── results_fusion.json    Raw fusion and design-space results
+│   │   ├── results_latency.json   Raw latency measurements
+│   │   ├── results_posthoc.json   Post-hoc ablation results
+│   │   ├── results_v1_miss_breakdown.json  v1 miss categories
+│   │   └── FROZEN_SHA256.txt      SHA-256 hashes of v1, v2, and suite.py at evaluation time
+│   └── patches/                   Drop-in replacements applied to the repository at revision
+│
+├── benchmarks/                    Earlier constructed suite and evidence audit files
+├── docker-compose.yml             PostgreSQL + backend containerised setup
+├── render.yaml                    Render deployment configuration
 └── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## Technology Stack
+
+**Backend**
+
+- Python 3.11, FastAPI 0.111, Uvicorn
+- SQLAlchemy 2.0 with PostgreSQL (automatic SQLite fallback)
+- Alembic for schema migrations
+- JWT authentication via python-jose and passlib/bcrypt
+- slowapi for per-route rate limiting
+
+**Frontend**
+
+- React 19, TypeScript, Vite 8
+- Tailwind CSS v4 with dark glassmorphism design tokens
+- Framer Motion for page and card animations
+- Recharts for mood trend visualisation
+- TanStack React Query and Axios for data fetching
+
+**Machine Learning and Signal Processing**
+
+- j-hartmann/emotion-english-distilroberta-base via HuggingFace Inference API (emotion-to-risk mapping)
+- Keyword heuristic fallback when the API is unavailable
+- Web Audio API (browser-side) for acoustic feature extraction; no server-side audio library required
+- SHAP-style keyword attribution displayed on the results page
+
+**Companion (Saathi)**
+
+- Google Gemini 2.5 Flash via REST API (thinkingBudget: 0, maxOutputTokens: 800)
+- Mistral-7B-Instruct-v0.2 via HuggingFace as secondary fallback
+- Rule-based topic-matched responses as tertiary fallback
+
+---
+
+## API Reference
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /api/health | None | Health check |
+| POST | /api/auth/register | None | Create user account |
+| POST | /api/auth/login | None | Obtain access and refresh tokens |
+| POST | /api/auth/refresh | Refresh token | Rotate access token |
+| POST | /api/predict/text | Bearer | Text-only risk prediction |
+| POST | /api/predict/fused | Bearer | Full multimodal assessment |
+| GET | /api/phq/history | Bearer | Past assessment records |
+| POST | /api/mood/log | Bearer | Log daily mood entry |
+| GET | /api/mood/trend | Bearer | Mood trend for charting |
+| POST | /api/chat/companion | None | Saathi conversation turn |
+
+The interactive API documentation is served at `/docs` when the backend is running.
+
+---
+
+## Local Setup
 
 ### Prerequisites
 
-Ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Python](https://www.python.org/) (v3.12 recommended for the frozen evidence environment)
+- Python 3.11
+- Node.js 18 or later
+- A HuggingFace account token (optional; keyword fallback is used when absent)
+- A Google Gemini API key (optional; rule-based fallback is used when absent)
 
----
-
-### 1. Backend Setup
+### Backend
 
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Create virtual environment
 python -m venv venv
 
-# Activate virtual environment
-# Windows (PowerShell):
+# Windows
 .\venv\Scripts\Activate.ps1
-# Mac/Linux:
-# source venv/bin/activate
 
-# Install the exact audited runtime/test environment
-pip install -r requirements-lock.txt
+# macOS / Linux
+source venv/bin/activate
 
-# Run the FastAPI server
-python main.py
+pip install -r requirements.txt
+
+# Create backend/.env with at minimum:
+# GEMINI_API_KEY=your_key_here
+# HF_TOKEN=your_token_here
+# SECRET_KEY=a_long_random_string
+
+uvicorn main:app --reload --port 8000
 ```
-> The API will start running at `http://localhost:8000`. API documentation is available at `http://localhost:8000/docs`.
 
----
+The server starts at `http://localhost:8000`. Swagger UI is at `http://localhost:8000/docs`.
 
-### 2. Frontend Setup
+### Frontend
 
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install Node dependencies
 npm install
-
-# Start Vite development server
 npm run dev
 ```
-> The application will start running at `http://localhost:5173`.
+
+The development server starts at `http://localhost:5173`.
 
 ---
 
-## ⚡ API Endpoint Reference
+## Deployment
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/health` | API Health Check |
-| `POST` | `/api/auth/register` | User Account Registration |
-| `POST` | `/api/auth/login` | User Login & JWT Retrieval |
-| `POST` | `/api/predict/text` | Text emotion/fallback screening analysis |
-| `POST` | `/api/predict/fused` | Multimodal Prediction (PHQ-9 + Text + Audio) |
-| `GET` | `/api/phq/history` | Historical Assessment Records |
-| `POST` | `/api/mood/log` | Daily Mood Log Entry |
+The live frontend is served from Vercel at `https://mindscreen.vercel.app`. The backend is hosted on Render at `https://mindscreen-rhe3.onrender.com`. The production API base URL is configured in `frontend/.env.production` and is not committed to this repository.
 
 ---
 
-## ⚠️ Medical Disclaimer
+## Running the Evaluation
 
-> **MindScreen is an academic research application created for demonstration purposes.**  
-> It is **not** a certified diagnostic tool and does **not** replace professional medical advice, diagnosis, or treatment. If you or someone you know is in distress or experiencing a mental health crisis, please contact emergency services or reach out to a professional mental health provider immediately:
-> - **iCall (India)**: +91 9152987821
-> - **NIMHANS Helpline**: 080-46110007
-> - **Vandrevala Foundation**: 1860-2662-345
-
----
-
-## 📜 License & Acknowledgments
-
-Developed as part of the **RVITM Major Project (BCS685)**.  
-Uses the hosted Hugging Face `j-hartmann/emotion-english-distilroberta-base` model as an affective proxy. Provider behavior and the served model revision are not pinned, so hosted inference is not treated as deterministic evidence. The production audio path is a hand-designed heuristic and is not trained or validated on DAIC-WOZ. Invalid historical DAIC-WOZ scripts are quarantined and excluded from current evidence.
-
-## Verification
+The `mindscreen_code_and_evaluation/evaluation/` directory reproduces all numbers in the accompanying paper. The SDCNL and Twitter corpora are not redistributed here and must be downloaded separately.
 
 ```bash
-pip install -r backend/requirements-lock.txt
-pytest
-python backend/run_submission_evidence.py
-cd frontend
-npm test
-npm run build
+cd mindscreen_code_and_evaluation
+
+# Download corpora (not included)
+mkdir ../data
+git clone --depth 1 https://github.com/ayaanzhaque/SDCNL.git ../data/SDCNL
+git clone --depth 1 https://github.com/laxmimerit/twitter-suicidal-intention-dataset.git ../data/twitter
+
+cd evaluation
+pip install pandas numpy scipy scikit-learn
+
+python eval_crisis.py        # Table VI, Figure 2, constructed suite
+python eval_posthoc.py       # Ablation, v2.1, v1 miss breakdown, lexicon ceiling
+python fusion_analysis.py    # Tables IV and V, modality ablation
+
+# Verify frozen hashes
+sha256sum -c FROZEN_SHA256.txt
 ```
 
-The evidence command writes and validates `benchmarks/submission_evidence.json` and `benchmarks/current_weight_sensitivity.json`. It includes current implementation facts, deterministic HRE cases, a constructed/team-labeled crisis-language conformance set, and a descriptive five-configuration weight-sensitivity analysis over constructed modality-score cases. The sensitivity analysis reports raw fusion separately from HRE and is not an accuracy study or weight optimization. Timing values are local in-process component microbenchmarks, not HTTP, database, browser extraction, hosted-API, network, cloud, frontend-rendering, cold-start, or concurrency measurements. Memory values are Python `tracemalloc` peak allocations, not application memory or RSS.
+---
+
+## Limitations
+
+- No component has been evaluated against clinician-administered depression diagnoses. No diagnostic accuracy figures are claimed.
+- The emotion classifier and acoustic index were not validated against depression labels. Fusion weights are design choices, not learned from labeled data.
+- Three of the six acoustic descriptors (ZCR, spectral centroid, spectral rolloff) lack direct literature support for depression screening.
+- The crisis-language filter and emotion model are English-only. Hinglish and regional-language input are out of scope.
+- Saathi's conversational responses have not undergone safety red-teaming.
+- The SDCNL corpus uses subreddit membership as a proxy label. The Twitter corpus label provenance is undocumented.
+
+---
+
+## Helplines
+
+If you or someone you know is in distress:
+
+- Tele-MANAS (Government of India): 14416 or 1-800-891-4416 (free, 24/7)
+- iCall (Tata Institute of Social Sciences): 9152987821 (Monday to Saturday, 8 am to 10 pm)
+- NIMHANS Helpline: 080-46110007
+
+---
+
+## Disclaimer
+
+MindScreen is a research prototype developed for academic purposes. It is not a certified diagnostic instrument and does not replace professional medical advice, diagnosis, or treatment. All example inputs and outputs in this repository were generated by the authors for testing purposes; no real user data is included.

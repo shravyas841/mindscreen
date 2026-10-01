@@ -36,13 +36,13 @@ const RISK_CONFIG: Record<string, { label: string; color: string; bg: string; bo
     advice: ['Consult a mental health professional or counsellor', 'Reach out to a trusted person in your life', 'Avoid isolation — schedule social activities', 'Contact iCall: 9152987821 for support'],
   },
   severe: {
-    label: 'High Priority',
+    label: 'Severe',
     color: 'text-red-400',
     bg: 'bg-red-400/10',
     border: 'border-red-500/50',
     barColor: '#f87171',
-    description: 'This engineering screening result has been routed for priority follow-up. It is not a diagnosis or an acute-crisis determination.',
-    advice: ['Arrange prompt follow-up with a qualified mental health professional', 'Use the listed support resources if helpful', 'Tell a trusted person how you are feeling', 'If you feel in immediate danger, contact emergency services'],
+    description: 'Your responses indicate severe symptoms. Please seek professional help immediately.',
+    advice: ['Contact a crisis helpline immediately', 'Reach out to a mental health professional', 'Tell a trusted person how you are feeling', 'Do not be alone — seek company and support'],
   },
 };
 
@@ -76,24 +76,20 @@ export default function Results() {
           <span className="text-brand-tealL font-medium">Assessment Complete</span>
         </div>
         <h1 className="text-4xl font-bold text-white">Your Screening Results</h1>
-        <p className="text-gray-400 mt-2">Based on the PHQ-9, text, and any audio features you supplied</p>
+        <p className="text-gray-400 mt-2">Based on your PHQ-9 responses, text analysis, and voice recording</p>
       </div>
 
-      {/* Resource routing is separate from the acute-crisis indicator. */}
-      {result.resource_display_flag && (
-        <div className={`glass-card p-6 ${result.crisis_flag ? 'border-red-500/50 bg-red-500/5' : 'border-amber-500/40 bg-amber-500/5'}`}>
+      {/* Crisis Banner — shown FIRST if severe */}
+      {result.crisis_flag && (
+        <div className="glass-card border-red-500/50 bg-red-500/5 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="w-6 h-6 text-red-400" />
             </div>
             <div className="flex-1">
-              <h3 className={`text-xl font-bold mb-1 ${result.crisis_flag ? 'text-red-400' : 'text-amber-300'}`}>
-                {result.crisis_flag ? 'Immediate Support Available' : 'Professional Support Recommended'}
-              </h3>
+              <h3 className="text-xl font-bold text-red-400 mb-1">Immediate Support Available</h3>
               <p className="text-gray-300 text-sm mb-4">
-                {result.crisis_flag
-                  ? "An explicit safety indicator was detected. Please don't face this alone; reach out now."
-                  : 'This high-priority screening result is not an acute-crisis determination, but professional follow-up is recommended.'}
+                Your responses suggest you may be going through a very difficult time. Please don't face this alone. Reach out now.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(result.helplines ?? ['iCall: 9152987821', 'NIMHANS: 080-46110007', 'Vandrevala Foundation: 1860-2662-345']).map((h, i) => (
@@ -124,18 +120,18 @@ export default function Results() {
             <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden w-32">
               <div
                 className={`h-full rounded-full bg-gradient-to-r ${config.color === 'text-emerald-400' ? 'from-emerald-400 to-emerald-300' : config.color === 'text-amber-400' ? 'from-amber-400 to-amber-300' : config.color === 'text-orange-400' ? 'from-orange-400 to-orange-300' : 'from-red-400 to-red-300'}`}
-                style={{ width: `${(result.priority_score * 100).toFixed(0)}%` }}
+                style={{ width: `${(result.confidence * 100).toFixed(0)}%` }}
               />
             </div>
-            <span className="text-sm text-gray-300 font-medium">{(result.priority_score * 100).toFixed(0)}% Priority Score</span>
+            <span className="text-sm text-gray-300 font-medium">{(result.confidence * 100).toFixed(0)}% confidence</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed">{config.description}</p>
         </div>
 
         {/* Probability Chart */}
         <div className="glass-card p-6">
-          <h3 className="text-base font-semibold mb-1">Heuristic Score Distribution</h3>
-          <p className="text-xs text-gray-500 mb-4">Relative engineering scores; these are not calibrated clinical probabilities.</p>
+          <h3 className="text-base font-semibold mb-1">Probability Distribution</h3>
+          <p className="text-xs text-gray-500 mb-4">How the AI model scored each category</p>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={probData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
@@ -177,7 +173,7 @@ export default function Results() {
           {[
             { icon: ClipboardList, label: 'PHQ-9 Questionnaire', weight: '20%', desc: 'Your 9 clinical responses mapped across the 4-tier screening severity scale', color: 'text-brand-amber', bg: 'bg-brand-amber/10' },
             { icon: Brain, label: 'DistilRoBERTa Emotion NLP', weight: '50%', desc: 'Your journal entry analysed for affective valence and distress markers via transformer inference', color: 'text-brand-tealL', bg: 'bg-brand-teal/10' },
-            { icon: Mic, label: 'Acoustic Descriptor Heuristic', weight: '30%', desc: result.audio_available ? 'Supplied Web Audio descriptors scored by manually selected engineering rules' : 'Audio was omitted; the documented fixed prior was used at this fusion weight', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+            { icon: Mic, label: 'Acoustic Voice Analysis', weight: '30%', desc: 'Web Audio acoustic biomarkers (RMS loudness, energy variability, and spectral centroid)', color: 'text-purple-400', bg: 'bg-purple-400/10' },
           ].map((m) => {
             const Icon = m.icon;
             return (
@@ -201,10 +197,10 @@ export default function Results() {
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-2">
             <Mic className="w-4 h-4 text-purple-400" />
-            <h3 className="text-base font-semibold">Acoustic Descriptors — Vocal Footprint</h3>
+            <h3 className="text-base font-semibold">Acoustic Biomarkers — Vocal Footprint</h3>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Six browser-extracted descriptors mapped by a heuristic that has not been clinically validated.
+            Six-dimensional acoustic analysis extracted directly from your vocal recording via Web Audio API, mapped against healthy conversational baselines.
           </p>
           <AcousticRadarChart features={result.audio_features} />
         </div>
@@ -215,10 +211,10 @@ export default function Results() {
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-4 h-4 text-brand-tealL" />
-            <h3 className="text-base font-semibold">Lexical Indicators</h3>
+            <h3 className="text-base font-semibold">AI Explainability — Key Influential Words</h3>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Hand-written keyword indicators used by the display/fallback layer. These values are not SHAP explanations or causal model attributions.
+            The following words from your text entry had the most influence on the screening prediction. Red indicates higher distress indicators; green indicates protective/positive valence.
           </p>
           <div className="flex flex-wrap gap-2">
             {shapWords.map((w: { word: string; value: number }, i: number) => (

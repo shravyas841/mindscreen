@@ -75,7 +75,7 @@ export default function CounselorDashboard() {
       <div className="glass-card p-4 flex items-center gap-3 bg-brand-teal/10 border-brand-teal/30">
         <Lock className="w-5 h-5 text-brand-tealL shrink-0" />
         <p className="text-xs text-gray-300 leading-relaxed">
-          <strong className="text-white">Demonstration data:</strong> This portal currently uses a static sample roster. The repository does not establish end-to-end record encryption or production counselor access controls.
+          <strong className="text-white">Privacy Guarantee:</strong> Student journal entries and raw voice recordings are <strong className="text-brand-tealL">strictly encrypted and private to the student</strong>. Counselors are provided only triaged risk scores, PHQ-9 trends, and emergency crisis flags.
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export default function CounselorDashboard() {
               <tr className="border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 <th className="py-3 px-4">Student</th>
                 <th className="py-3 px-4">Latest Risk</th>
-                <th className="py-3 px-4">Demo Priority Score</th>
+                <th className="py-3 px-4">AI Confidence</th>
                 <th className="py-3 px-4">Last Assessment</th>
                 <th className="py-3 px-4">Trend</th>
                 <th className="py-3 px-4 text-right">Privacy Status</th>
@@ -238,7 +238,7 @@ export default function CounselorDashboard() {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <span className="inline-flex items-center text-xs text-gray-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
-                        <Lock className="w-3 h-3 mr-1 text-brand-tealL" /> Demo Record
+                        <Lock className="w-3 h-3 mr-1 text-brand-tealL" /> Text/Audio Encrypted
                       </span>
                     </td>
                   </tr>

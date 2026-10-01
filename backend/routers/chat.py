@@ -38,8 +38,8 @@ class ChatResponse(BaseModel):
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-TELE_MANAS = "Tele-MANAS (Govt. of India): 14416 or 1800-891-4416 (Free, 24/7)"
-KIRAN      = "KIRAN Mental Health Helpline: 1800-599-0019 (Free, 24/7)"
+TELE_MANAS = "Tele-MANAS (Govt. of India): 14416 or 1-800-891-4416 (Free, 24/7)"
+ICALL      = "iCall (TISS): 9152987821 (Mon–Sat, 8am–10pm)"
 
 SYSTEM_PROMPT = """You are Saathi (साथी), a warm, empathetic, and culturally aware Indian mental wellbeing companion on the MindScreen platform.
 
@@ -277,7 +277,7 @@ def talk_to_saathi(req: ChatRequest):
                 "I am right here with you."
             ),
             crisis_flag=True,
-            helpline_info=f"{TELE_MANAS} | {KIRAN}",
+            helpline_info=f"{TELE_MANAS} | {ICALL}",
             recommended_activity=RecommendedActivity(
                 title="432Hz Calm Sanctuary Breathwork",
                 category="Immediate Crisis Grounding",

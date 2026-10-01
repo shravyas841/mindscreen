@@ -179,7 +179,7 @@ export default function History() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-white">{formatDate(item.created_at)}</h3>
-                        <p className="text-sm text-gray-400">Stored Priority Score: {(item.confidence * 100).toFixed(1)}%</p>
+                        <p className="text-sm text-gray-400">AI Confidence: {(item.confidence * 100).toFixed(1)}%</p>
                       </div>
                     </div>
                     

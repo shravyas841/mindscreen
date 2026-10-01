@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { AUTH_ENDPOINTS } from './routes';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -31,7 +30,7 @@ apiClient.interceptors.response.use(
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refresh_token');
-        const { data } = await axios.post(`${API_BASE}${AUTH_ENDPOINTS.refresh}`, {
+        const { data } = await axios.post(`${API_BASE}/api/auth/refresh`, {
           refresh_token: refresh,
         });
         localStorage.setItem('access_token', data.access_token);

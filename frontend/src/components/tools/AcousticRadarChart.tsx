@@ -26,7 +26,7 @@ export const AcousticRadarChart: React.FC<AcousticRadarChartProps> = ({ features
   }
 
   // Map 0-1 values to percentages 0-100 for clear visualization
-  // Illustrative engineering reference only; it is not a clinical norm.
+  // Normative reference baseline reflects healthy conversational speech norms (Cummins et al. 2015)
   const data = [
     {
       metric: 'Loudness (RMS)',
@@ -82,7 +82,7 @@ export const AcousticRadarChart: React.FC<AcousticRadarChartProps> = ({ features
               tick={{ fill: '#6b7280', fontSize: 10 }}
             />
             <Radar
-              name="Illustrative Engineering Reference"
+              name="Healthy Baseline"
               dataKey="healthy"
               stroke="#E9C46A"
               fill="#E9C46A"

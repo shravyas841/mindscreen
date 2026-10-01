@@ -19,11 +19,12 @@ export interface FusedPredictRequest {
   answers: number[];
   text: string;
   audio_features?: AudioFeatures | null;
+  audio_base64?: string | null;
 }
 
 export interface RiskResponse {
   risk_level: 'minimal' | 'mild' | 'moderate' | 'severe';
-  priority_score: number;
+  confidence: number;
   probabilities: {
     minimal: number;
     mild: number;
@@ -35,7 +36,6 @@ export interface RiskResponse {
     phq_factors?: { question: string; value: number }[];
   } | null;
   audio_features?: AudioFeatures | null;
-  audio_available: boolean;
   raw_probabilities?: {
     minimal: number;
     mild: number;
@@ -43,6 +43,5 @@ export interface RiskResponse {
     severe: number;
   } | null;
   crisis_flag: boolean;
-  resource_display_flag: boolean;
   helplines?: string[] | null;
 }

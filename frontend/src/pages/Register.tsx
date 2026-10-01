@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { register } from '../api/auth';
+import { apiClient } from '../api/client';
 import { Brain, User, Mail, Lock, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Register() {
@@ -49,7 +49,8 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await register({
+      await apiClient.post('/auth/register', {
+        name: formData.name,
         email: formData.email,
         password: formData.password
       });

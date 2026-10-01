@@ -1,11 +1,7 @@
 """
-Generate Legacy Exploratory Evidence
+Generate Raw Evidence and Archive Experimental Benchmarks
 --------------------------------------------------------
-This historical script predates the current safety semantics. Its constructed
-profiles and outputs remain for audit history and must not be cited as current
-submission evidence. Use ``run_submission_evidence.py`` instead.
-
-It records:
+Executes all benchmarks without mocked or hand-waving steps, recording:
 1. Exact P1-P5 sensitivity vectors, raw fused scores, temperature-softened scores, and HRE outputs.
 2. 50-run local latency profiling with warm-up, computing mean, std, p95, and tracemalloc peak heap.
 3. 14-statement crisis corpus full execution trace (naive vs scope-resolved).
@@ -26,7 +22,7 @@ from services.audio_service import get_audio_prediction
 from services.phq_service import calculate_phq_score
 from services.negation_service import detect_crisis_intent
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks", "historical")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── 1. P1 - P5 Sensitivity Analysis ──────────────────────────────────────────

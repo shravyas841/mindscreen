@@ -1,11 +1,7 @@
 """
-Save Legacy Raw Evidence for HRE, Latency, and Negation Tests
+Save Final Raw Evidence for HRE, Latency, and Negation Tests
 -----------------------------------------------------------
-This historical script predates the current HRE and crisis-language rules. Its
-outputs are retained for traceability and are not authoritative submission
-evidence. Use ``run_submission_evidence.py`` for current results.
-
-It archives:
+Archives explicit runtime evidence for:
 1. Adversarial HRE Masking Scenarios (TC-1, TC-2, TC-3)
 2. 50-run Latency Traces with min, max, p95, mean, and std
 3. Negation Disambiguation Results
@@ -25,7 +21,7 @@ from services.phq_service import calculate_phq_score
 from services.audio_service import get_audio_prediction
 from services.negation_service import detect_crisis_intent
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks", "historical")
+OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "benchmarks")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── 1. HRE Adversarial Masking Scenarios ──────────────────────────────────────

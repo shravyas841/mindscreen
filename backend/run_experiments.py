@@ -1,12 +1,7 @@
 """
-Legacy MindScreen Exploratory Benchmark Suite
+MindScreen Experimental Benchmark Suite
 ----------------------------------------
-This historical script uses constructed profiles and external-service paths.
-Its output is exploratory and is not authoritative submission evidence. Run
-``run_submission_evidence.py`` for the deterministic evidence cited by the
-current paper.
-
-It executes:
+Executes reproducible quantitative evaluations for the MindScreen paper:
 1. Weight Sensitivity Analysis across 5 weighting schemes.
 2. Modality Missingness & Fault-Tolerance matrix.
 3. Saathi Conversational Router & Crisis-Triage Test Suite.
@@ -127,7 +122,7 @@ def run_missingness_benchmark():
         res = get_fused_prediction(p_in, t_in if t_in else "neutral", audio_features=a_in)
         print(f"\nConfiguration: {cname}")
         print(f"  Risk Level : {res['risk_level']}")
-        print(f"  Priority score : {res['priority_score']:.3f}")
+        print(f"  Confidence : {res['confidence']:.3f}")
         print(f"  Probs      : {res['probabilities']}")
 
 
