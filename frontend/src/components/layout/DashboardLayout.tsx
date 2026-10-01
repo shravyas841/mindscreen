@@ -50,7 +50,7 @@ export function DashboardLayout() {
             <div>
               <h1 className="font-serif-title text-xl font-bold tracking-wider text-[#FFE8C2] leading-none">MindScreen</h1>
               <p className="text-[9px] text-[#94D2BD] uppercase tracking-widest mt-1">
-                Clinical Sanctuary
+                Research Prototype
               </p>
             </div>
           </Link>
@@ -95,7 +95,7 @@ export function DashboardLayout() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold truncate text-[#FFE8C2]">{user?.email?.split('@')[0] || 'User'}</p>
-              <p className="text-[10px] text-[#E8B4B8]/50 truncate">{user?.email || 'patient@mindscreen.org'}</p>
+              <p className="text-[10px] text-[#E8B4B8]/50 truncate">{user?.email || 'user@mindscreen.local'}</p>
             </div>
           </div>
           <button

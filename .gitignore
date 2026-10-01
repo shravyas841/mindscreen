@@ -20,6 +20,7 @@ reachinbox-scheduler/
 __pycache__/
 *.py[cod]
 backend/venv/
+.venv/
 *.egg-info/
 .pytest_cache/
 
@@ -27,6 +28,7 @@ backend/venv/
 node_modules/
 frontend/dist/
 frontend/node_modules/
+mindscreen_code_and_evaluation/mindscreen_code_and_evaluation/data/
 
 # ML Models (too large for git — use Git LFS or store separately)
 *.pt

@@ -1,5 +1,6 @@
 import re, pandas as pd, numpy as np
 import crisis_v1, crisis_v2
+from scipy.stats import binomtest
 NAIVE_PATTERNS = crisis_v1.EXPLICIT_SUICIDAL_PHRASES + [rf"\b{re.escape(t)}\b" for t in crisis_v1.CRISIS_TOKENS]
 def naive(text):
     t = crisis_v2.normalise(text)
@@ -25,3 +26,15 @@ def metrics(y, p):
     return dict(tp=tp, fn=fn, tn=tn, fp=fp,
         sens=tp/(tp+fn) if tp+fn else float('nan'), spec=tn/(tn+fp) if tn+fp else float('nan'),
         ppv=tp/(tp+fp) if tp+fp else float('nan'))
+
+def wilson(k, n, z=1.959964):
+    if n == 0: return (float('nan'),)*2
+    p = k/n; den = 1+z*z/n; c = (p+z*z/(2*n))/den; h = z*np.sqrt(p*(1-p)/n+z*z/(4*n*n))/den
+    return (c-h, c+h)
+
+def mcnemar(a, b):
+    """Exact McNemar test on paired boolean outcomes."""
+    a = np.asarray(a, bool); b = np.asarray(b, bool)
+    n01 = int((~a & b).sum()); n10 = int((a & ~b).sum())
+    p = binomtest(n01, n01+n10, 0.5).pvalue if n01+n10 else 1.0
+    return n01, n10, p

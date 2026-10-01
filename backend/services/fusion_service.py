@@ -1,97 +1,120 @@
-from services.phq_service import calculate_phq_score
-from services.ml_service import get_text_prediction
+"""Authoritative late-fusion and safety-policy implementation."""
+
+from typing import Mapping, Optional
+
 from services.audio_service import get_audio_prediction
-from services.calibration_service import apply_temperature_scaling
-from typing import Optional
+from services.calibration_service import DEFAULT_TEMPERATURE, apply_temperature_scaling
+from services.ml_service import get_text_prediction
+from services.negation_service import detect_crisis_intent
+from services.phq_service import calculate_phq_score
+
+
+RISK_TIERS = ("minimal", "mild", "moderate", "severe")
+DEPLOYED_WEIGHTS = {"text": 0.50, "audio": 0.30, "phq": 0.20}
+SAFETY_SCORE_FLOOR = 0.90
+
+
+def fuse_probabilities(
+    text_probs: Mapping[str, float],
+    phq_probs: Mapping[str, float],
+    audio_probs: Optional[Mapping[str, float]] = None,
+    *,
+    weights: Mapping[str, float] = DEPLOYED_WEIGHTS,
+) -> dict[str, float]:
+    """Fuse tier-score vectors and renormalise over present modalities."""
+    active = {"text": float(weights["text"]), "phq": float(weights["phq"])}
+    if audio_probs is not None:
+        active["audio"] = float(weights["audio"])
+    if any(weight < 0 for weight in active.values()) or sum(active.values()) <= 0:
+        raise ValueError("Fusion weights for present modalities must be non-negative and sum above zero")
+
+    total_weight = sum(active.values())
+    fused: dict[str, float] = {}
+    for tier in RISK_TIERS:
+        numerator = active["text"] * float(text_probs[tier])
+        numerator += active["phq"] * float(phq_probs[tier])
+        if audio_probs is not None:
+            numerator += active["audio"] * float(audio_probs[tier])
+        fused[tier] = numerator / total_weight
+    return fused
+
+
+def apply_safety_rules(
+    fused_tier: str,
+    phq_tier: str,
+    item9_positive: bool,
+    text_crisis: bool,
+    base_score: float,
+) -> dict:
+    """Apply R0 (PHQ floor), R1 (Item 9), and R2 (crisis language)."""
+    order = {tier: index for index, tier in enumerate(RISK_TIERS)}
+    if fused_tier not in order or phq_tier not in order:
+        raise ValueError("Unknown risk tier")
+
+    floor_applied = order[phq_tier] > order[fused_tier]
+    final_tier = phq_tier if floor_applied else fused_tier
+    explicit_crisis = bool(item9_positive or text_crisis)
+    if explicit_crisis:
+        final_tier = "severe"
+
+    priority_score = float(base_score)
+    if final_tier == "severe" and (floor_applied or explicit_crisis):
+        priority_score = max(SAFETY_SCORE_FLOOR, priority_score)
+
+    return {
+        "risk_level": final_tier,
+        "priority_score": priority_score,
+        "crisis_flag": explicit_crisis,
+        "resource_display_flag": explicit_crisis or final_tier == "severe",
+        "phq_floor_applied": floor_applied,
+    }
+
 
 def get_fused_prediction(
     phq_answers: list[int],
     text: str,
     audio_features: Optional[dict] = None,
-    audio_base64: Optional[str] = None,
+    *,
     calibrate: bool = True,
-    temperature: float = 1.20,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> dict:
-    """
-    Weighted decision-level fusion (text 0.50, audio 0.30, PHQ-9 0.20),
-    renormalised over the modalities actually present, followed by a
-    monotone temperature transform (T=1.2, not a calibration) and the
-    safety layer:
-      R0  PHQ-9 floor   final tier >= tier implied by the PHQ-9 total
-      R1  Item 9 > 0    -> high-priority tier, crisis flag
-      R2  crisis text   -> high-priority tier, crisis flag
-    """
-    # 1. Text prediction (emotion model via HF API, or keyword fallback)
+    """Run deployed 0.50/0.30/0.20 fusion followed by R0, R1, and R2."""
     text_result = get_text_prediction(text)
-    text_probs  = text_result["probabilities"]
-
-    # 2. Audio prediction: only real browser-extracted features are used.
-    #    The legacy base64 payload-size proxy is NOT an acoustic measurement
-    #    and is no longer used; if no features are supplied the audio branch
-    #    is treated as missing and the weights are renormalised (revision).
-    audio_present = audio_features is not None
-    audio_probs = get_audio_prediction(audio_features=audio_features)["probabilities"] if audio_present else None
-
-    # 3. PHQ-9 rule-based score vector
     phq_result = calculate_phq_score(phq_answers)
-    phq_probs  = phq_result.probabilities
+    audio_present = audio_features is not None
+    audio_result = get_audio_prediction(audio_features=audio_features) if audio_present else None
 
-    # 4. Weighted late fusion (w_T=0.50, w_A=0.30, w_Q=0.20), renormalised
-    #    over the modalities that are actually present.
-    weights = {"text": 0.50, "audio": 0.30 if audio_present else 0.0, "phq": 0.20}
-    wsum = sum(weights.values())
-    keys = ["minimal", "mild", "moderate", "severe"]
-    raw_fused = {
-        k: (weights["text"] * text_probs[k]
-            + (weights["audio"] * audio_probs[k] if audio_present else 0.0)
-            + weights["phq"] * phq_probs[k]) / wsum
-        for k in keys
-    }
-    normalized_probs = raw_fused  # already on the simplex
-
-    # 5. Temperature softening (monotone; does not change the arg-max)
-    if calibrate:
-        final_probs = apply_temperature_scaling(normalized_probs, temperature=temperature)
-    else:
-        final_probs = {k: round(v, 4) for k, v in normalized_probs.items()}
-
-    best_label = max(final_probs, key=final_probs.get)
-    base_score = final_probs[best_label]
-    confidence = base_score
-
-    # 6. Safety override layer (revision)
-    #    R0  PHQ-9 floor:   final tier >= tier implied by the PHQ-9 total
-    #                       (fusion may escalate but never de-escalate)
-    #    R1  Item 9 > 0  -> high-priority tier + crisis flag
-    #    R2  affirmative self-directed crisis language -> same as R1
-    from services.negation_service import detect_crisis_intent
-    order = {k: i for i, k in enumerate(keys)}
-    phq_tier = phq_result.severity                      # minimal/mild/moderate/severe
-    floor_applied = order[phq_tier] > order[best_label]
-    if floor_applied:
-        best_label = phq_tier
-        confidence = max(0.90, confidence) if phq_tier == "severe" else confidence
-
-    total_score = sum(phq_answers)
-    has_item9 = len(phq_answers) >= 9 and phq_answers[8] > 0
-    text_crisis = detect_crisis_intent(text)["is_crisis"] if text else False
-    explicit_crisis = has_item9 or text_crisis
-    if explicit_crisis:
-        best_label = "severe"
-        confidence = max(0.90, confidence)
-
-    resource_display = explicit_crisis or (best_label == "severe")
+    raw_fused = fuse_probabilities(
+        text_result["probabilities"],
+        phq_result.probabilities,
+        audio_result["probabilities"] if audio_result else None,
+    )
+    tier_scores = (
+        apply_temperature_scaling(raw_fused, temperature=temperature)
+        if calibrate
+        else {tier: round(score, 4) for tier, score in raw_fused.items()}
+    )
+    fused_tier = max(tier_scores, key=tier_scores.get)
+    base_score = tier_scores[fused_tier]
+    crisis_result = detect_crisis_intent(text) if text else {"is_crisis": False}
+    safety = apply_safety_rules(
+        fused_tier=fused_tier,
+        phq_tier=phq_result.severity,
+        item9_positive=phq_answers[8] > 0,
+        text_crisis=bool(crisis_result["is_crisis"]),
+        base_score=base_score,
+    )
 
     return {
-        "risk_level":            best_label,
-        "confidence":            confidence,
-        "base_score":            base_score,
-        "probabilities":         final_probs,
-        "raw_probabilities":     normalized_probs,
-        "crisis_flag":           explicit_crisis,
-        "resource_display_flag": resource_display,
-        "shap_data":             text_result["shap_data"],
-        "audio_features":        audio_features,
-        "audio_present":         audio_present,
-        "phq_floor_applied":     floor_applied,
+        **safety,
+        # Kept for existing clients; priority_score is the precise name.
+        "confidence": safety["priority_score"],
+        "base_score": base_score,
+        "probabilities": tier_scores,
+        "raw_probabilities": raw_fused,
+        "shap_data": text_result["shap_data"],
+        "audio_features": audio_features,
+        "audio_present": audio_present,
+        "crisis_trigger": crisis_result.get("trigger"),
+        "text_inference_source": text_result.get("inference_source", "unknown"),
     }

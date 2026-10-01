@@ -1,11 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 import requests
 import logging
 import random
 import os
 from config import settings
+from middleware.rate_limit import limiter
+from models.user import User
+from services.auth_service import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +17,12 @@ router = APIRouter(prefix="/api/chat", tags=["Saathi Wellbeing Companion"])
 # ── Data Models ────────────────────────────────────────────────────────────────
 
 class ChatMessage(BaseModel):
-    sender: str = Field(..., description="'user' or 'saathi'")
-    content: str = Field(..., description="Message text")
+    sender: Literal["user", "saathi"] = Field(..., description="'user' or 'saathi'")
+    content: str = Field(..., min_length=1, max_length=5000, description="Message text")
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., description="User message")
-    history: Optional[List[ChatMessage]] = Field(default=[], description="Conversation history")
+    message: str = Field(..., min_length=1, max_length=5000, description="User message")
+    history: List[ChatMessage] = Field(default_factory=list, max_length=50, description="Conversation history")
     current_mood: Optional[str] = Field(default="neutral")
 
 class RecommendedActivity(BaseModel):
@@ -245,7 +248,8 @@ def call_hf_llm(message: str, history: List[ChatMessage], hf_token: str) -> Opti
 # ── Main Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/companion", response_model=ChatResponse)
-def talk_to_saathi(req: ChatRequest):
+@limiter.limit("30/minute")
+def talk_to_saathi(request: Request, req: ChatRequest, current_user: User = Depends(get_current_user)):
     """
     Saathi (साथी) — Your Wellbeing Companion.
     

@@ -1,14 +1,24 @@
-"""Fusion analyses using the authors' own PHQ, audio and calibration code."""
-import json, itertools, numpy as np
-from orig_services.phq_service import calculate_phq_score
-from orig_services.audio_service import _interpolate, get_audio_prediction
-from orig_services.calibration_service import apply_temperature_scaling
+"""Fusion analyses bound to the released backend implementation."""
+import json, itertools, sys
+from pathlib import Path
+
+import numpy as np
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+BACKEND_ROOT = REPOSITORY_ROOT / "backend"
+sys.path.insert(0, str(BACKEND_ROOT))
+
+from services.audio_service import _interpolate, get_audio_prediction
+from services.calibration_service import apply_temperature_scaling
+from services.fusion_service import fuse_probabilities
+from services.phq_service import calculate_phq_score
 K = ["minimal", "mild", "moderate", "severe"]
 W = {"Equal": (1/3,1/3,1/3), "Text-dom": (.6,.2,.2), "Audio-dom": (.2,.6,.2), "PHQ-dom": (.2,.2,.6), "MindScreen": (.5,.3,.2)}
 
 def vec(d): return np.array([d[k] for k in K])
 def fuse(pt, pa, pq, w, T=1.2):
-    raw = w[0]*pt + w[1]*pa + w[2]*pq; raw = raw/raw.sum()
+    raw = vec(fuse_probabilities(dict(zip(K, pt)), dict(zip(K, pq)), dict(zip(K, pa)),
+                                 weights={"text":w[0], "audio":w[1], "phq":w[2]}))
     soft = vec(apply_temperature_scaling(dict(zip(K, raw)), T))
     return raw, soft
 
@@ -60,10 +70,11 @@ def scan(w=(.5,.3,.2), audio="present", rule1=20, floor=False):
         for (e, s), a in itertools.product(text_states, aud):
             t = text_vec(GAMMA[e], s)
             if a is None:
-                if audio == "prior": pf = w[0]*t + w[1]*PRIOR + w[2]*q
-                elif audio == "neutral": pf = w[0]*t + w[1]*NEUTRAL + w[2]*q
-                else: pf = (w[0]*t + w[2]*q)/(w[0]+w[2])   # renormalised over present modalities
-            else: pf = w[0]*t + w[1]*a + w[2]*q
+                if audio == "prior": a = PRIOR
+                elif audio == "neutral": a = NEUTRAL
+            pf = vec(fuse_probabilities(dict(zip(K,t)), dict(zip(K,q)),
+                     dict(zip(K,a)) if a is not None else None,
+                     weights={"text":w[0], "audio":w[1], "phq":w[2]}))
             y = int(pf.argmax())
             if S >= rule1: y = 3
             if floor: y = max(y, tq)
@@ -81,9 +92,10 @@ def _answers(S):
     return a   # item 9 kept at 0 so only Rule 1 is exercised
 
 variants = {
- "deployed(HS>=20)": scan(),
+ "historical_baseline(HS>=20,no_R0)": scan(),
  "HS>=15": scan(rule1=15),
  "PHQ_floor_R0": scan(floor=True),
+ "deployed_R0": scan(floor=True),
  "skipped_audio_neutral_features(deployed_client)": scan(audio="neutral"),
  "skipped_audio_server_prior(API)": scan(audio="prior"),
  "skipped_audio_renormalised(revised,no_R0)": scan(audio="renorm"),
@@ -92,6 +104,7 @@ variants = {
 bands = {"0-4":range(0,5),"5-9":range(5,10),"10-14":range(10,15),"15-19":range(15,20),"20-27":range(20,28)}
 summary = {v: {b: round(float(np.mean([r[S]["under"] for S in rng])),4) for b, rng in bands.items()} for v, r in variants.items()}
 summary_over = {v: {b: round(float(np.mean([r[S]["over"] for S in rng])),4) for b, rng in bands.items()} for v, r in variants.items()}
+config_counts = {b: sum(variants["deployed_R0"][S]["n"] for S in rng) for b, rng in bands.items()}
 
 # ---------- (C) PHQ-only vs fused agreement for each modality subset (as deployed, no HRE) ----------
 def agree(ws):
@@ -99,15 +112,20 @@ def agree(ws):
     for S in range(28):
         q=vec(calculate_phq_score(_answers(S)).probabilities); tq=phq_tier(S)
         for (e,s),a in itertools.product(text_states, audio_states):
-            t=text_vec(GAMMA[e],s); pf=ws[0]*t+ws[1]*a+ws[2]*q
+            t=text_vec(GAMMA[e],s)
+            pf=vec(fuse_probabilities(dict(zip(K,t)), dict(zip(K,q)), dict(zip(K,a)),
+                   weights={"text":ws[0], "audio":ws[1], "phq":ws[2]}))
             tot+=1; agr+= int(pf.argmax())==tq
     return round(agr/tot,4)
 subsets = {"PHQ only":(0,0,1),"Text only":(1,0,0),"Audio only":(0,1,0),"Text+PHQ (.71/.29)":(.5/.7,0,.2/.7),
            "Audio+PHQ (.6/.4)":(0,.6,.4),"Text+Audio (.625/.375)":(.625,.375,0),"All (.5/.3/.2)":(.5,.3,.2)}
 agreement = {k: agree(v) for k,v in subsets.items()}
 
-json.dump(dict(neutral_audio_vector=[round(float(x),4) for x in NEUTRAL], tableV=tabV, under=summary, over=summary_over, agreement=agreement,
-               n_text_states=len(text_states), n_audio_states=len(audio_states)), open("results_fusion.json","w"), indent=1)
+json.dump(dict(methodology={"implementation":"backend/services", "uniform_synthetic_weighting":True,
+               "states_per_phq_total":len(text_states)*len(audio_states), "configurations_per_band":config_counts},
+               neutral_audio_vector=[round(float(x),4) for x in NEUTRAL], tableV=tabV, under=summary,
+               over=summary_over, agreement=agreement, n_text_states=len(text_states),
+               n_audio_states=len(audio_states)), open("results_fusion.json","w"), indent=1)
 print("TABLE V (class, raw max, softened max):")
 for p in tabV: print(p, {s:(d['cls'],d['raw'],d['soft']) for s,d in tabV[p].items()})
 print("\nUNDER-TRIAGE vs PHQ tier (fraction of text x audio configurations):")

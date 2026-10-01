@@ -1,12 +1,18 @@
 """Post hoc analyses requested in verification (run after the main evaluation)."""
-import json, re, numpy as np
+import json, re, sys
+from pathlib import Path
+
+import numpy as np
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPOSITORY_ROOT / "backend"))
+from services.negation_service import detect_crisis_intent as deployed_v21
 from common import *
-from eval_crisis import wilson, mcnemar
 import crisis_v1, crisis_v2, crisis_v2_1
 from suite import SUITE
 
 def v1_raw(t): return crisis_v1.detect_crisis_intent(t)["is_crisis"]          # no shared normalisation
-def v21(t): return crisis_v2_1.detect_crisis_intent(t)["is_crisis"]
+def v21(t): return deployed_v21(t)["is_crisis"]
 def abl(t): return crisis_v2_1.detect_v2scope_v1vocab(t)["is_crisis"]
 M = {"v1_raw_input": v1_raw, "v2_scope_v1_vocab": abl, "v2.1_selfharm": v21}
 out = {}

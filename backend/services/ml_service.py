@@ -1,6 +1,9 @@
 import os
 import re
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 # ── HuggingFace Inference API ──────────────────────────────────────────────
 # Uses the HF API so we don't load a 500MB model into memory on the server.
@@ -21,9 +24,6 @@ EMOTION_RISK_MAP = {
     "neutral":  (0, "minimal"),
     "surprise": (0, "minimal"),
 }
-
-print("ML Service initialised (HuggingFace Inference API mode — lightweight).")
-
 
 def _get_hf_token() -> str | None:
     return os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
@@ -47,9 +47,9 @@ def _query_hf_api(text: str) -> list | None:
                 return data[0]
             if isinstance(data, list) and isinstance(data[0], dict):
                 return data
-        print(f"HF API returned status {resp.status_code}: {resp.text[:200]}")
+        logger.warning("Hugging Face inference returned status %s", resp.status_code)
     except Exception as e:
-        print(f"HF Inference API error: {e}")
+        logger.warning("Hugging Face inference unavailable: %s", e)
     return None
 
 
@@ -98,6 +98,7 @@ def _fallback_prediction(text: str) -> dict:
         "confidence": conf,
         "probabilities": probs,
         "shap_data": {"words": _build_shap_heuristic(text, idx)},
+        "inference_source": "keyword_fallback",
     }
 
 
@@ -141,13 +142,14 @@ def get_text_prediction(text: str) -> dict:
             "severe":   round(probs_list[3], 4),
         }
 
-        print(f"HF API prediction: emotion={emotion}, risk={risk_label} ({score*100:.1f}%)")
+        logger.info("Hugging Face emotion=%s mapped_tier=%s", emotion, risk_label)
         return {
             "risk_level":    risk_label,
             "confidence":    round(score, 4),
             "probabilities": probabilities,
             "shap_data":     {"words": _build_shap_heuristic(text, risk_idx)},
+            "inference_source": "huggingface_emotion_api",
         }
 
-    print("HF API unavailable — using keyword fallback.")
+    logger.info("Using local keyword fallback for text inference")
     return _fallback_prediction(text)

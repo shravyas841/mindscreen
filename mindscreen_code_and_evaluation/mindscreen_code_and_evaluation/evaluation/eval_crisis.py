@@ -1,23 +1,10 @@
 """Held-out evaluation of crisis-intent filters on two public corpora."""
 import json, numpy as np
-from scipy.stats import binomtest
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from common import *
 from suite import SUITE
-
-def wilson(k, n, z=1.959964):
-    if n == 0: return (float('nan'),)*2
-    p = k/n; den = 1+z*z/n; c = (p+z*z/(2*n))/den; h = z*np.sqrt(p*(1-p)/n+z*z/(4*n*n))/den
-    return (c-h, c+h)
-
-def mcnemar(a, b):
-    """exact McNemar on paired binary outcomes a,b (bool arrays)."""
-    a = np.asarray(a, bool); b = np.asarray(b, bool)
-    n01 = int((~a & b).sum()); n10 = int((a & ~b).sum())
-    p = binomtest(n01, n01+n10, 0.5).pvalue if n01+n10 else 1.0
-    return n01, n10, p
 
 res = {}
 tr = load_sdcnl("train")

@@ -1,8 +1,15 @@
-"""Server-side compute latency of the local (no-network) screening path."""
-import time, json, tracemalloc, resource, platform, os, statistics as st, numpy as np
-from orig_services.phq_service import calculate_phq_score
-from orig_services.audio_service import get_audio_prediction
-from orig_services.calibration_service import apply_temperature_scaling
+"""Server-side compute latency of the local (no-network) screening path (Linux)."""
+import time, json, tracemalloc, resource, platform, os, sys
+from pathlib import Path
+
+import numpy as np
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPOSITORY_ROOT / "backend"))
+from services.phq_service import calculate_phq_score
+from services.audio_service import get_audio_prediction
+from services.calibration_service import apply_temperature_scaling
+from services.fusion_service import fuse_probabilities
 import crisis_v1, crisis_v2
 from common import load_sdcnl
 texts = load_sdcnl("test").text.tolist()
@@ -14,7 +21,7 @@ def pipeline(text, v=crisis_v2):
     a = get_audio_prediction(audio_features=feat)["probabilities"]
     c = v.detect_crisis_intent(text)["is_crisis"]
     t = {"minimal":.05,"mild":.05,"moderate":.05,"severe":.85} if c else {"minimal":.9,"mild":.05,"moderate":.03,"severe":.02}
-    raw = {k: .5*t[k]+.3*a[k]+.2*q[k] for k in K}
+    raw = fuse_probabilities(t, q, a)
     s = apply_temperature_scaling(raw, 1.2)
     return max(s, key=s.get)
 def bench(fn, args_list, warm=20):

@@ -1,4 +1,6 @@
-# MindScreen: revision notes
+# MindScreen: historical revision notes
+
+> Archived provenance only. These notes describe the pre-reconciliation ZIP and its former `patches/` directory. The patches have since been integrated and removed; use the repository root README for current instructions.
 
 These notes go with `mindscreen_revised.pdf` and `mindscreen_revised.tex`.
 

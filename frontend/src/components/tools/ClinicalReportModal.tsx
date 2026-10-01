@@ -95,9 +95,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Confidence</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Priority Score</p>
               <p className="text-xl font-bold text-white print:text-black">
-                {(result.confidence * 100).toFixed(1)}%
+                {(result.priority_score * 100).toFixed(1)}%
               </p>
             </div>
             <div>
@@ -107,9 +107,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Crisis Flag (HRE)</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Explicit Crisis Signal</p>
               <p className={`text-xl font-bold ${result.crisis_flag ? 'text-red-400 print:text-red-600' : 'text-emerald-400 print:text-green-600'}`}>
-                {result.crisis_flag ? 'FLAGGED (Active)' : 'CLEAR'}
+                {result.crisis_flag ? 'DETECTED' : 'NOT DETECTED'}
               </p>
             </div>
           </div>
@@ -125,9 +125,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
                 <p className="text-red-200/80 print:text-red-600 mt-0.5">
                   {item9Endorsed
                     ? 'Reason: Patient endorsed suicidal ideation on PHQ-9 Item 9.'
-                    : totalPHQ !== null && totalPHQ >= 20
-                    ? 'Reason: Severe psychometric score burden (PHQ-9 S >= 20).'
-                    : 'Reason: Verified linguistic crisis intent detected in text entry.'}
+                    : 'Reason: Affirmative linguistic crisis expression detected in the text entry.'}
                 </p>
                 <p className="mt-1 text-gray-300 print:text-gray-700 font-medium">
                   Routing: Tele-MANAS (14416 / 1-800-891-4416) | iCall TISS (9152987821)
@@ -220,10 +218,10 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
             </div>
           )}
 
-          {/* Section 4: Calibrated Probability Distribution */}
+          {/* Section 4: transformed tier scores */}
           <div>
             <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-              4. Calibrated Probability Distribution (Temperature-Scaled T=1.20)
+              4. Tier Scores (Fixed Temperature Transform, T=1.20; Not Clinically Calibrated)
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               {Object.entries(result.probabilities).map(([tier, prob]) => (

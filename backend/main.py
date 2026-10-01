@@ -38,10 +38,10 @@ allowed_origins = [
     "http://127.0.0.1:5175",
     "http://localhost:3000",
     "https://mindscreen.vercel.app",
-    settings.ALLOWED_ORIGINS,
+    *[origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()],
 ]
 # Deduplicate
-allowed_origins = list(set(allowed_origins))
+allowed_origins = list(dict.fromkeys(allowed_origins))
 
 app.add_middleware(
     CORSMiddleware,

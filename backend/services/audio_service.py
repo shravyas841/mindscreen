@@ -1,6 +1,3 @@
-import base64
-from typing import Optional
-
 # ── Audio Service ─────────────────────────────────────────────────────────────
 #
 # UPGRADED: Now accepts real acoustic features extracted by the browser-side
@@ -22,29 +19,19 @@ from typing import Optional
 #     - Low speaking ratio (long silences, hesitancy)
 #     - ZCR can be high (breathiness) or low (slurred)
 #
-# Legacy fallback: if no audio_features provided, falls back to Base64 size proxy.
-
 import numpy as np
 
 
-def get_audio_prediction(audio_base64: Optional[str] = None,
-                         audio_features: Optional[dict] = None) -> dict:
+def get_audio_prediction(audio_features: dict) -> dict:
     """
     Compute an acoustic risk score vector.
 
-    Priority:
-      1. audio_features dict (real Web Audio API features) — used if provided
-      2. audio_base64 string (legacy payload-size fallback) — used otherwise
-      3. No input — returns neutral baseline
+    Audio absence is handled by the fusion service, which omits this branch and
+    renormalises the text and PHQ-9 weights.
     """
-    if audio_features is not None:
-        return _score_from_features(audio_features)
-
-    if audio_base64:
-        return _score_from_base64(audio_base64)
-
-    # No audio provided — conservative neutral prior
-    return _make_result("mild", 0.50, [0.25, 0.45, 0.20, 0.10])
+    if audio_features is None:
+        raise ValueError("audio_features are required when scoring the audio modality")
+    return _score_from_features(audio_features)
 
 
 # ── Real feature-based scoring ─────────────────────────────────────────────────
@@ -113,7 +100,7 @@ def _score_from_features(f: dict) -> dict:
                              [0.50, 0.35, 0.12, 0.03],
                              [0.15, 0.55, 0.25, 0.05])
         label, conf = "mild", max(probs)
-    elif depression_index < 0.65:
+    elif depression_index <= 0.65:
         probs = _interpolate(depression_index, 0.45, 0.65,
                              [0.15, 0.55, 0.25, 0.05],
                              [0.05, 0.20, 0.60, 0.15])
@@ -125,30 +112,6 @@ def _score_from_features(f: dict) -> dict:
         label, conf = "severe", max(probs)
 
     return _make_result(label, round(conf, 3), [round(p, 4) for p in probs])
-
-
-# ── Legacy Base64 size fallback ────────────────────────────────────────────────
-
-def _score_from_base64(audio_base64: str) -> dict:
-    """
-    LEGACY: payload-size proxy used when browser does not send audio_features.
-    Not a validated acoustic measurement.
-    """
-    try:
-        encoded = audio_base64.split(",", 1)[1] if "," in audio_base64 else audio_base64
-        audio_bytes = base64.b64decode(encoded)
-        size_kb = len(audio_bytes) / 1024
-
-        if size_kb < 5:
-            return _make_result("moderate", 0.55, [0.15, 0.20, 0.55, 0.10])
-        elif size_kb < 30:
-            return _make_result("mild",    0.55, [0.20, 0.55, 0.20, 0.05])
-        else:
-            return _make_result("minimal", 0.65, [0.65, 0.20, 0.10, 0.05])
-
-    except Exception as e:
-        print(f"Audio (base64) fallback error: {e}")
-        return _make_result("minimal", 0.50, [0.55, 0.25, 0.15, 0.05])
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

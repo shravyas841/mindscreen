@@ -28,15 +28,6 @@ const phqOptions = [
   { value: 3, label: 'Nearly every day' }
 ];
 
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
-
 export default function Assessment() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);

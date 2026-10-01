@@ -1,33 +1,37 @@
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel, Field, conint, conlist
 from typing import List, Optional, Dict, Any
 
 class PHQSubmitRequest(BaseModel):
-    answers: conlist(int, min_length=9, max_length=9) # type: ignore
+    answers: conlist(conint(ge=0, le=3), min_length=9, max_length=9) # type: ignore
 
 class PredictTextRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=10000)
 
 class AudioFeatures(BaseModel):
     """Real acoustic features extracted by the browser-side Web Audio API extractor."""
-    rms_mean: float          # mean RMS energy [0-1]: average loudness
-    rms_std: float           # std-dev of RMS [0-1]: energy variability (low = monotone)
-    zcr_mean: float          # mean zero-crossing rate [0-1]: voicing / breathiness
-    spectral_centroid: float # normalised spectral centroid [0-1]: voice brightness
-    spectral_rolloff: float  # normalised 85% rolloff [0-1]: high-frequency energy
-    speaking_ratio: float    # fraction of frames above silence threshold [0-1]
+    rms_mean: float = Field(ge=0, le=1)
+    rms_std: float = Field(ge=0, le=1)
+    zcr_mean: float = Field(ge=0, le=1)
+    spectral_centroid: float = Field(ge=0, le=1)
+    spectral_rolloff: float = Field(ge=0, le=1)
+    speaking_ratio: float = Field(ge=0, le=1)
 
 class FusedPredictRequest(BaseModel):
-    answers: conlist(int, min_length=9, max_length=9) # type: ignore
-    text: str
+    answers: conlist(conint(ge=0, le=3), min_length=9, max_length=9) # type: ignore
+    text: str = Field(min_length=1, max_length=10000)
     audio_features: Optional[AudioFeatures] = None   # real features from Web Audio API
-    audio_base64: Optional[str] = None               # DEPRECATED: payload-size fallback
 
 class RiskResponse(BaseModel):
     risk_level: str
     confidence: float
+    priority_score: float
     probabilities: Dict[str, float]
     raw_probabilities: Optional[Dict[str, float]] = None
     shap_explanation: Optional[Dict[str, Any]] = None
     audio_features: Optional[Dict[str, float]] = None
     crisis_flag: bool
+    resource_display_flag: bool
+    phq_floor_applied: bool = False
+    audio_present: Optional[bool] = None
+    text_inference_source: Optional[str] = None
     helplines: Optional[List[str]] = None

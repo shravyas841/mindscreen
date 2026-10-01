@@ -19,12 +19,12 @@ export interface FusedPredictRequest {
   answers: number[];
   text: string;
   audio_features?: AudioFeatures | null;
-  audio_base64?: string | null;
 }
 
 export interface RiskResponse {
   risk_level: 'minimal' | 'mild' | 'moderate' | 'severe';
   confidence: number;
+  priority_score: number;
   probabilities: {
     minimal: number;
     mild: number;
@@ -43,5 +43,9 @@ export interface RiskResponse {
     severe: number;
   } | null;
   crisis_flag: boolean;
+  resource_display_flag: boolean;
+  phq_floor_applied: boolean;
+  audio_present?: boolean | null;
+  text_inference_source?: string | null;
   helplines?: string[] | null;
 }

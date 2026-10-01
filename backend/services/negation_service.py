@@ -2,7 +2,7 @@
 Crisis-intent filter, revision 2.1 (clause-scoped, ConText-style).
 v2.1 = evaluated v2 + self-harm expressions as crisis triggers.
 
-Changes relative to v1 (backend/services/negation_service.py):
+Changes relative to the frozen v1 evaluation implementation:
   1. Scope is the clause, not a fixed 30-character window. Clauses end at
      sentence punctuation, commas/semicolons, and the conjunctions
      "but", "however", "though", "although", "yet", "except" (cf. ConText
@@ -138,7 +138,7 @@ def _third_party(prefix: str) -> bool:
     return False
 
 
-def detect_crisis_intent(text: str) -> Dict[str, Any]:
+def _detect_clause_scoped(text: str) -> Dict[str, Any]:
     out = {"is_crisis": False, "distress": False, "trigger": None,
            "negated_hits": 0, "third_party_hits": 0}
     if not text or not text.strip():
@@ -166,21 +166,9 @@ def detect_crisis_intent(text: str) -> Dict[str, Any]:
     return out
 
 
-if __name__ == "__main__":
-    import sys
-    for s in sys.argv[1:]:
-        print(s, "->", detect_crisis_intent(s))
-
-
-# ---------------------------------------------------------------------------
-# Backward-compatible wrapper for the existing MindScreen callers
-# (ml_service, fusion_service, routers/chat.py expect these keys).
-# ---------------------------------------------------------------------------
-_detect_v2 = detect_crisis_intent
-
-
-def detect_crisis_intent(text: str) -> Dict[str, Any]:  # noqa: F811
-    r = _detect_v2(text)
+def detect_crisis_intent(text: str) -> Dict[str, Any]:
+    """Return the v2.1 decision plus compatibility metadata for callers."""
+    r = _detect_clause_scoped(text)
     return {
         "is_crisis": r["is_crisis"],
         "distress": r["distress"],
@@ -191,3 +179,9 @@ def detect_crisis_intent(text: str) -> Dict[str, Any]:  # noqa: F811
         # rule-based filter: no calibrated confidence is available
         "confidence": None,
     }
+
+
+if __name__ == "__main__":
+    import sys
+    for s in sys.argv[1:]:
+        print(s, "->", detect_crisis_intent(s))

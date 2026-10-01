@@ -73,7 +73,7 @@ export default function Landing() {
               </h1>
               
               <p className="text-sm sm:text-base text-[#F0C0C6] font-medium leading-relaxed mb-7 max-w-lg mx-auto">
-                A quiet screening sanctuary integrating standardized PHQ-9 metrics, MentalBERT semantics, and voice acoustic biomarkers.
+                An academic screening prototype combining PHQ-9 scores, an English emotion model, and exploratory acoustic descriptors.
               </p>
 
               <div className="flex items-center justify-center">
@@ -109,10 +109,10 @@ export default function Landing() {
         <section className="py-16 relative z-20">
           <div className="text-center mb-14">
             <h2 className="font-serif-title text-3xl sm:text-5xl italic font-normal tracking-tight mb-3 text-[#FFE8C2]">
-              A Calibrated Tri-Modal Pipeline
+              A Tri-Modal Screening Pipeline
             </h2>
             <p className="text-[#E8B4B8]/90 max-w-xl mx-auto text-sm font-medium leading-relaxed">
-              Combining standardized self-reports, contextual language patterns, and vocal biomarkers for clinical-grade insight.
+              Combining standardized self-report scores, language patterns, and exploratory acoustic descriptors for research use.
             </p>
           </div>
           
@@ -122,13 +122,13 @@ export default function Landing() {
                 icon: ClipboardList,
                 title: 'Clinical PHQ-9',
                 weight: '20% Weight',
-                desc: 'Standardized 9-question depression severity metric calibrated to international diagnostic criteria.',
+                desc: 'Standardized 9-question depression symptom severity questionnaire.',
               },
               {
                 icon: Brain,
-                title: 'MentalBERT NLP',
+                title: 'Emotion DistilRoBERTa',
                 weight: '50% Weight',
-                desc: 'Domain-adapted transformer analyzing semantic sentiment, cognitive distortions, and journal reflections.',
+                desc: 'Off-the-shelf English emotion classifier mapped heuristically to screening tiers.',
               },
               {
                 icon: Mic,
