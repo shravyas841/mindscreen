@@ -6,6 +6,7 @@ import { AlertTriangle, Phone, Home, RefreshCw, Brain, Mic, ClipboardList, Check
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AcousticRadarChart } from '../components/tools/AcousticRadarChart';
 import { ClinicalReportModal } from '../components/tools/ClinicalReportModal';
+import { formatPercentage, formatPriorityScore, getAudioUsageSummary, getEffectiveFusionWeights } from '../utils/resultPresentation';
 
 const RISK_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; barColor: string; description: string; advice: string[] }> = {
   minimal: {
@@ -50,6 +51,7 @@ export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
   const result = location.state?.result as RiskResponse;
+  const phqAnswers = location.state?.phqAnswers as number[] | undefined;
   const [showReport, setShowReport] = useState(false);
 
   if (!result) return <Navigate to="/dashboard" replace />;
@@ -65,6 +67,8 @@ export default function Results() {
   ];
 
   const shapWords = result.shap_explanation?.words ?? [];
+  const audioPresent = result.audio_present ?? Boolean(result.audio_features);
+  const effectiveWeights = getEffectiveFusionWeights(audioPresent);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in">
@@ -76,7 +80,9 @@ export default function Results() {
           <span className="text-brand-tealL font-medium">Assessment Complete</span>
         </div>
         <h1 className="text-4xl font-bold text-white">Your Screening Results</h1>
-        <p className="text-gray-400 mt-2">Based on your PHQ-9 responses, text analysis, and voice recording</p>
+        <p className="text-gray-400 mt-2">
+          {getAudioUsageSummary(audioPresent)}
+        </p>
       </div>
 
       {/* Support resources appear for explicit crisis signals or any High Priority result. */}
@@ -123,7 +129,7 @@ export default function Results() {
                 style={{ width: `${(result.priority_score * 100).toFixed(0)}%` }}
               />
             </div>
-            <span className="text-sm text-gray-300 font-medium">{(result.priority_score * 100).toFixed(0)}% priority score</span>
+            <span className="text-sm text-gray-300 font-medium">{formatPriorityScore(result.priority_score)} priority score</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed">{config.description}</p>
         </div>
@@ -171,9 +177,9 @@ export default function Results() {
         <p className="text-sm text-gray-400 mb-5">MindScreen combines the available inputs below. Text path used: {result.text_inference_source ?? 'unknown'}.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: ClipboardList, label: 'PHQ-9 Questionnaire', weight: '20%', desc: 'Your 9 self-report responses mapped across the 4-tier screening severity scale', color: 'text-brand-amber', bg: 'bg-brand-amber/10' },
-            { icon: Brain, label: 'DistilRoBERTa Emotion NLP', weight: '50%', desc: 'Your journal entry analysed for affective valence and distress markers via transformer inference', color: 'text-brand-tealL', bg: 'bg-brand-teal/10' },
-            { icon: Mic, label: 'Acoustic Voice Analysis', weight: '30%', desc: 'Web Audio acoustic biomarkers (RMS loudness, energy variability, and spectral centroid)', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+            { icon: ClipboardList, label: 'PHQ-9 Questionnaire', weight: formatPercentage(effectiveWeights.phq), desc: 'Your 9 self-report responses mapped across the 4-tier screening severity scale', color: 'text-brand-amber', bg: 'bg-brand-amber/10' },
+            { icon: Brain, label: 'DistilRoBERTa Emotion NLP', weight: formatPercentage(effectiveWeights.text), desc: 'Your journal entry analysed for affective valence and distress markers via transformer inference', color: 'text-brand-tealL', bg: 'bg-brand-teal/10' },
+            { icon: Mic, label: 'Exploratory Acoustic Descriptors', weight: formatPercentage(effectiveWeights.audio), desc: audioPresent ? 'Browser-derived RMS level and variability, zero-crossing rate, spectral centroid, spectral rolloff, and speaking ratio' : 'Audio was not used for this result', color: 'text-purple-400', bg: 'bg-purple-400/10' },
           ].map((m) => {
             const Icon = m.icon;
             return (
@@ -192,7 +198,7 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Acoustic Somatic Biomarkers Radar */}
+      {/* Acoustic descriptor radar */}
       {result.audio_features && (
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-2">
@@ -258,7 +264,7 @@ export default function Results() {
           className="bg-purple-600 hover:bg-purple-700 text-white font-semibold flex items-center gap-2"
         >
           <FileText className="w-4 h-4" />
-          Clinical Summary (PDF)
+          Assessment Report (PDF)
         </Button>
         <Button className="bg-brand-teal hover:bg-brand-tealL text-white font-semibold" onClick={() => navigate('/assessment')}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -266,11 +272,12 @@ export default function Results() {
         </Button>
       </div>
 
-      {/* Clinical Report Export Modal */}
+      {/* Assessment Report Export Modal */}
       <ClinicalReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
         result={result}
+        phqAnswers={phqAnswers}
       />
     </div>
   );

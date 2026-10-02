@@ -134,7 +134,7 @@ export default function Landing() {
                 icon: Mic,
                 title: 'Vocal Acoustics',
                 weight: '30% Weight',
-                desc: 'Acoustic feature extraction isolating pitch variation, energy contours, and MFCC biomarkers.',
+                desc: 'Exploratory browser extraction of RMS level and variability, zero-crossing rate, spectral centroid, spectral rolloff, and speaking ratio.',
               }
             ].map((feature, i) => (
               <motion.div 

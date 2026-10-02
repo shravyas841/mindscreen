@@ -4,7 +4,7 @@ from database import get_db
 from models.assessment import Assessment
 from models.user import User
 from schemas.assessment import FusedPredictRequest, RiskResponse, PredictTextRequest
-from services.fusion_service import get_fused_prediction
+from services.fusion_service import apply_safety_rules, get_fused_prediction
 from services.ml_service import get_text_prediction
 from services.auth_service import get_current_user
 from services.negation_service import detect_crisis_intent
@@ -25,32 +25,39 @@ async def predict_text(
         raise HTTPException(status_code=422, detail="Text cannot be empty")
         
     result = get_text_prediction(payload.text)
-    crisis_flag = bool(detect_crisis_intent(payload.text)["is_crisis"])
-    resource_display_flag = crisis_flag or result["risk_level"] == "severe"
+    crisis_result = detect_crisis_intent(payload.text)
+    safety = apply_safety_rules(
+        fused_tier=result["risk_level"],
+        phq_tier=result["risk_level"],
+        item9_positive=False,
+        text_crisis=bool(crisis_result["is_crisis"]),
+        base_score=result["confidence"],
+    )
 
     assessment = Assessment(
         user_id       = current_user.id,
         text_entry    = None,  # data minimisation: do not persist journal text
-        risk_level    = result["risk_level"],
-        confidence    = result["confidence"],
+        risk_level    = safety["risk_level"],
+        confidence    = safety["priority_score"],
         probabilities = result["probabilities"],
         shap_data     = result["shap_data"],
-        crisis_flag   = crisis_flag,
+        crisis_flag   = safety["crisis_flag"],
     )
     db.add(assessment)
     db.commit()
     db.refresh(assessment)
 
     response = RiskResponse(
-        risk_level       = result["risk_level"],
-        confidence       = result["confidence"],
-        priority_score   = result["confidence"],
+        risk_level       = safety["risk_level"],
+        confidence       = safety["priority_score"],
+        priority_score   = safety["priority_score"],
         probabilities    = result["probabilities"],
         shap_explanation = result["shap_data"],
-        crisis_flag      = crisis_flag,
-        resource_display_flag = resource_display_flag,
+        crisis_flag      = safety["crisis_flag"],
+        resource_display_flag = safety["resource_display_flag"],
+        crisis_trigger   = crisis_result.get("trigger"),
         text_inference_source = result.get("inference_source", "unknown"),
-        helplines        = crisis_helplines() if resource_display_flag else None,
+        helplines        = crisis_helplines() if safety["resource_display_flag"] else None,
     )
     return response
 
@@ -102,6 +109,7 @@ async def predict_fused(
         phq_floor_applied = result["phq_floor_applied"],
         audio_present     = result["audio_present"],
         text_inference_source = result["text_inference_source"],
+        crisis_trigger   = result.get("crisis_trigger"),
         helplines         = crisis_helplines() if result["resource_display_flag"] else None,
     )
     return response

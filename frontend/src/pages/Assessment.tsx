@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, CheckCircle, Mic, Square, Trash2, SkipForward, A
 import { usePredictFused } from '../hooks/useAssessment';
 import { AudioWaveformVisualizer } from '../components/tools/AudioWaveformVisualizer';
 import { AudioFeatureExtractor, AudioFeatures } from '../utils/audioFeatures';
+import { createResultsNavigationState } from '../utils/resultPresentation';
 
 const phqQuestions = [
   "Little interest or pleasure in doing things?",
@@ -163,7 +164,7 @@ export default function Assessment() {
         audioFeatures: features,
       });
 
-      navigate('/results', { state: { result: res } });
+      navigate('/results', { state: createResultsNavigationState(res, answers) });
     } catch (err: any) {
       console.error('Submission failed', err);
       setSubmitError('Submission failed. Please check that the backend server is running.');
@@ -257,7 +258,7 @@ export default function Assessment() {
                 <span className="text-purple-400 font-medium mb-4">Step 11 of 11 — Voice Analysis</span>
                 <h2 className="text-2xl font-semibold mb-2">Speak freely for 10–30 seconds</h2>
                 <p className="text-gray-400 mb-6 text-sm">
-                  Describe how you have been feeling lately. Our acoustic AI will analyse tone, pitch, and speech patterns. You can also skip this step.
+                  Describe how you have been feeling lately. The browser will calculate RMS level and variability, zero-crossing rate, spectral centroid, spectral rolloff, and speaking ratio. You can also skip this step.
                 </p>
 
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 bg-white/5 border border-white/10 rounded-xl p-8">

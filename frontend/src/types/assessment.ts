@@ -46,6 +46,7 @@ export interface RiskResponse {
   resource_display_flag: boolean;
   phq_floor_applied: boolean;
   audio_present?: boolean | null;
+  crisis_trigger?: string | null;
   text_inference_source?: string | null;
   helplines?: string[] | null;
 }

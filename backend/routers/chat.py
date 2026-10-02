@@ -110,7 +110,7 @@ FALLBACK_RESPONSES = {
     ],
     "anxiety": [
         "I can hear how overwhelming this wave of anxiety feels right now. Anxiety has a way of making everything feel urgent and out of control all at once.\n\nLet's slow down together. Take a breath with me—in through the nose for 4 counts, hold for 7, out through the mouth for 8. You don't have to solve anything in this moment.\n\nWhat does this feeling in your body right now remind you of? When did it start?",
-        "That feeling of being overwhelmed—when everything presses in at once—is so real and so valid.\n\nYour nervous system is trying to protect you, but it sometimes misfires and treats everything as an emergency. You are actually safe right now, in this moment.\n\nWhat's the single biggest thing your mind keeps returning to?",
+        "That feeling of being overwhelmed—when everything presses in at once—is so real and so valid.\n\nYour nervous system may be reacting as though everything is an emergency. If you can, pause and notice what is around you while taking one slow breath.\n\nWhat's the single biggest thing your mind keeps returning to?",
         "Panic and anxiety are your body's alarm system going off, even when the immediate danger isn't as large as it feels.\n\nYou reached out here, which means part of you knows you can move through this. I'm right here with you.\n\nLet's breathe first, then talk. Can you feel your feet on the ground right now?",
     ],
     "lonely": [

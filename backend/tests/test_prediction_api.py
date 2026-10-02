@@ -5,9 +5,13 @@ from routers import predict
 
 
 client = TestClient(app)
+_cached_auth_headers: dict[str, str] | None = None
 
 
 def auth_headers(email: str) -> dict[str, str]:
+    global _cached_auth_headers
+    if _cached_auth_headers is not None:
+        return _cached_auth_headers
     response = client.post("/api/auth/register", json={
         "email": email,
         "password": "correct-horse-battery",
@@ -15,7 +19,8 @@ def auth_headers(email: str) -> dict[str, str]:
         "has_consented": True,
     })
     assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+    _cached_auth_headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
+    return _cached_auth_headers
 
 
 def test_fused_route_preserves_crisis_resource_and_missing_audio_flags(monkeypatch):
@@ -45,6 +50,55 @@ def test_fused_route_preserves_crisis_resource_and_missing_audio_flags(monkeypat
     assert body["resource_display_flag"] is True
     assert body["phq_floor_applied"] is True
     assert body["audio_present"] is False
+
+
+def test_text_route_applies_r2_score_floor_and_flags(monkeypatch):
+    headers = auth_headers("text-crisis-api@example.com")
+    monkeypatch.setattr(predict, "get_text_prediction", lambda text: {
+        "risk_level": "minimal",
+        "confidence": 0.62,
+        "probabilities": {"minimal": .62, "mild": .2, "moderate": .1, "severe": .08},
+        "shap_data": {"words": []},
+        "inference_source": "test",
+    })
+
+    response = client.post(
+        "/api/predict/text",
+        headers=headers,
+        json={"text": "I want to kill myself."},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["risk_level"] == "severe"
+    assert body["crisis_flag"] is True
+    assert body["resource_display_flag"] is True
+    assert body["priority_score"] >= 0.9
+    assert body["crisis_trigger"]
+
+
+def test_text_route_non_crisis_preserves_model_result(monkeypatch):
+    headers = auth_headers("text-non-crisis-api@example.com")
+    monkeypatch.setattr(predict, "get_text_prediction", lambda text: {
+        "risk_level": "mild",
+        "confidence": 0.61,
+        "probabilities": {"minimal": .2, "mild": .61, "moderate": .12, "severe": .07},
+        "shap_data": {"words": []},
+        "inference_source": "test",
+    })
+
+    response = client.post(
+        "/api/predict/text",
+        headers=headers,
+        json={"text": "I feel tired after studying this week."},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["risk_level"] == "mild"
+    assert body["priority_score"] == 0.61
+    assert body["crisis_flag"] is False
+    assert body["resource_display_flag"] is False
 
 
 def test_phq_endpoint_item9_is_r1_even_with_low_total():

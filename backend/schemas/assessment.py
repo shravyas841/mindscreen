@@ -33,5 +33,6 @@ class RiskResponse(BaseModel):
     resource_display_flag: bool
     phq_floor_applied: bool = False
     audio_present: Optional[bool] = None
+    crisis_trigger: Optional[str] = None
     text_inference_source: Optional[str] = None
     helplines: Optional[List[str]] = None
