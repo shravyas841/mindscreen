@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from config import settings
 
 connect_args = {}
@@ -18,6 +17,8 @@ try:
     with engine.connect() as conn:
         pass
 except Exception as e:
+    if settings.ENVIRONMENT.lower() == "production":
+        raise RuntimeError("Production database connection failed") from e
     print(f"Primary DB connection failed ({e}). Falling back to local SQLite database.")
     engine = create_engine(
         "sqlite:///./mental_health.db",

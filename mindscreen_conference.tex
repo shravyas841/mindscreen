@@ -1,0 +1,189 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{url}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{MindScreen: A Late-Fusion Depression Screening Prototype with a Rule-Based Safety Override}
+
+\author{\IEEEauthorblockN{Savitha G, Ruchita Saraf, Shravya Sanikere, Chandrika Lamani, Apoorva K}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{RV Institute of Technology and Management}\\
+Bengaluru, India \\
+savithag.rvitm@rvei.edu.in, ruchitasaraf9@gmail.com}
+}
+
+\maketitle
+
+\begin{abstract}
+Weighted late fusion lets a screening system combine questionnaire, text, and voice signals, but averaging can hide an explicit risk signal. MindScreen is a web prototype that fuses PHQ-9 responses, an off-the-shelf emotion classifier, and six browser-extracted acoustic descriptors. A design-space analysis shows that without overrides, the fused tier fell below the PHQ-9 severity band in 37.0\%, 55.3\%, and 85.2\% of text-audio input configurations for PHQ-9 totals of 5--9, 10--14, and 15--19 respectively; the text branch alone can overturn a PHQ-9 prediction whenever its top score exceeds 0.29. A PHQ-9 tier floor removes this under-triage by construction. We then evaluated the crisis-language filter on two public corpora not used in development. The original filter detected 22.8\% of positive SDCNL posts and 24.2\% of positive tweets; the clause-scoped revision (v2) raised sensitivity to 55.4\% and 51.3\% (McNemar $p < 10^{-10}$), with specificity of 75.8\% and 91.7\%; adding self-harm triggers (v2.1) further raised Twitter sensitivity to 52.2\%. The filter remains a supplementary trigger, not a safeguard. Clinical validation is the prerequisite for any use beyond research.
+\end{abstract}
+
+\begin{IEEEkeywords}
+depression screening, late fusion, multimodal, crisis detection, rule-based systems
+\end{IEEEkeywords}
+
+\section{Introduction}
+Mental health disorders, notably depression, impose a staggering global burden. According to the World Health Organization \cite{who_depression}, depression is a leading cause of disability worldwide. In India, the National Mental Health Survey by NIMHANS \cite{nimhans_nmhs} revealed a treatment gap of 70--80\% for depressive disorders, severely hindering patient outcomes. Screening tools hold the potential to bridge this access gap by providing early triage \cite{sutton_cdss}. However, building automated multimodal systems presents a critical challenge: standard score averaging can conceal acute risk signals behind benign inputs.
+
+MindScreen addresses this by combining PHQ-9 responses \cite{kroenke_phq9}, text-based emotion classification, and browser-extracted acoustic descriptors in a weighted late-fusion architecture. We present two contributions: (1) a design-space analysis demonstrating under-triage under naive late fusion and the R0 tier-floor fix; and (2) the development and empirical evaluation of a clause-scoped crisis-language filter on public corpora not used in its development. We address three research questions: how often does deployed fusion under-triage relative to the PHQ-9 (RQ1); how sensitive and specific is the crisis-language filter on real text (RQ2); and what is the server-side computational cost (RQ3)?
+
+\section{Related Work}
+The PHQ-9 \cite{kroenke_phq9} is widely validated as a clinical baseline for depression screening. Its ninth item specifically screens for suicidal ideation, providing a critical safety signal \cite{rossom_item9, kroenke_phq8}. In text-based risk detection, large language models and BERT variants, such as MentalBERT \cite{ji_mentalbert}, have shown promise in identifying depression and suicide risk in social media text (e.g., Reddit) \cite{ruiz_reddit, zirikly_clpsych, mcbain_llm_suicide, moore_llm_stigma}. Acoustic markers of depression are well-documented; Cummins et al. \cite{cummins_speech} review features such as low root-mean-square (RMS) energy, monotone voice, and reduced speaking ratios as robust indicators. 
+
+For multimodal systems, Baltru\v{s}aitis et al. \cite{baltrusaitis_survey} and Alghowinem et al. \cite{alghowinem_multimodal} highlight the efficacy of late fusion, which preserves interpretability and gracefully handles missing modalities. To ensure patient safety, rule-based crisis filters, leveraging algorithms like ConText \cite{harkema_context}, are often preferred over pure machine learning approaches due to their deterministic nature. Conversational agents like Woebot \cite{fitzpatrick_woebot} utilize similar safety principles to direct users in acute distress to clinical resources.
+
+\section{System Design}
+
+\subsection{Overview}
+MindScreen is implemented as a modern web prototype, utilizing a React and TypeScript frontend coupled with a FastAPI backend. Data persistence is managed via PostgreSQL/SQLite, adhering to privacy standards such as India's DPDP Act \cite{pdpa_india}.
+
+\subsection{PHQ-9 Module}
+The PHQ-9 module comprises 9 items scored 0--3, yielding a total score $S \in [0, 27]$. A tier function $\tau(S)$ maps the score to severity bands: minimal (0--4), mild (5--9), moderate (10--14), and High Priority (15--27). The PHQ-9 tier-score vector $p_Q(S)$ is piece-wise fixed for these bands: $\{0.80, 0.15, 0.04, 0.01\}$ for the minimal band, and analogously for higher severity bands.
+
+\subsection{Text Emotion Branch}
+User text is processed via the \texttt{j-hartmann/emotion-english-distilroberta-base} model \cite{hartmann_model} using the HuggingFace API. The model maps 7 emotion classes to a 4-class depression risk tier. Table \ref{tab:emotion_map} illustrates this mapping. A keyword fallback mechanism activates when the API is unavailable.
+
+\begin{table}[htbp]
+\caption{Emotion to Risk Tier Mapping}
+\label{tab:emotion_map}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Emotion} & \textbf{Risk Tier} \\
+\midrule
+Sadness & Moderate \\
+Fear & Mild \\
+Anger & Mild \\
+Disgust & Moderate \\
+Joy & Minimal \\
+Neutral & Minimal \\
+Surprise & Minimal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Audio Branch}
+Audio processing operates client-side using the W3C Web Audio API \cite{w3c_webaudio}. Six features are extracted: \texttt{rms\_mean}, \texttt{rms\_std}, \texttt{zcr\_mean}, \texttt{spectral\_centroid}, \texttt{spectral\_rolloff}, and \texttt{speaking\_ratio}. All features are normalized to $[0, 1]$. A weighted sum yields an \texttt{acoustic\_risk\_index} (energy 0.20, variability 0.20, silence 0.20, brightness 0.15, rolloff 0.15, zcr 0.10). Table \ref{tab:audio_map} details the threshold-based tier mapping. The acoustic branch relies on hand-tuned coefficients; evaluation against clinical corpora such as DAIC-WOZ \cite{gratch_daic} is required before any performance claim can be made.
+
+\begin{table}[htbp]
+\caption{Acoustic Risk Index Thresholds to Risk Tier}
+\label{tab:audio_map}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{acoustic\_risk\_index} & \textbf{Risk Tier} \\
+\midrule
+$< 0.25$ & Minimal \\
+$0.25 - 0.45$ & Mild \\
+$0.45 - 0.65$ & Moderate \\
+$> 0.65$ & High Priority \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Late Fusion}
+Late fusion produces the fused tier-score vector $p_F = (0.50 \cdot p_X + 0.30 \cdot p_A + 0.20 \cdot p_Q) / w_{sum}$, where $w_{sum}$ is the sum of weights of the present modalities. The fusion weights reflect the prototype's multimodal design; the R0 tier floor (Section~\ref{sec:safety}) prevents the unvalidated text and acoustic branches from lowering the PHQ-9-derived severity tier. Section~\ref{sec:eval} quantifies the consequences of the deployed weight choice. A fixed temperature-based score transformation ($T=1.20$) is applied following \cite{guo_calibration} to soften the reported confidence score. This transformation was not learned on a calibration set and does not imply calibrated clinical probabilities; it does not change the argmax and therefore does not affect the output tier. If audio is absent, $w_{sum}=0.70$ and $p_F = (0.714 \cdot p_X + 0.286 \cdot p_Q)$.
+
+\subsection{Safety Override Layer}
+\label{sec:safety}
+To counter under-triage, a rule-based safety layer enforces minimum severity bounds. Throughout this paper the term \emph{High Priority} denotes the highest tier (the internal API label is \texttt{severe} for backward compatibility):
+\begin{itemize}
+    \item \textbf{R0}: $\hat{y} = \max(y_F, \tau(S))$ --- the final tier is never below the PHQ-9 tier.
+    \item \textbf{R1}: If item~9 score $>0$, then $\hat{y} = \text{High Priority}$ and $\text{CF}=1$.
+    \item \textbf{R2}: If $\text{Crisis}(x)$ is true, then $\hat{y} = \text{High Priority}$ and $\text{CF}=1$.
+\end{itemize}
+When a rule triggers a High Priority classification, the final confidence $c_{out} = \max(0.90, s_F)$.
+
+\subsection{Crisis Filter (v2.1)}
+The crisis filter is a clause-scoped algorithm inspired by ConText \cite{harkema_context}. Clause boundaries include punctuation, commas, and conjunctions (e.g., but, however, though). The negation window strictly operates up to 5 tokens before a trigger, bounded within the same clause. Pseudo-negations (e.g., ``can't stop'', ``not okay'') are explicitly ignored for suppression. Third-party references only suppress triggers within the same clause. Version 2.1 introduces explicit self-harm expressions as triggers. Distress words (e.g., ``hopeless'', ``worthless'') activate a distress flag, but not a full crisis flag.
+
+\subsection{Companion (Saathi)}
+Saathi is a conversational agent utilizing Gemini 2.5 Flash \cite{google_gemini} with a HuggingFace fallback. Every message passes through the crisis filter prior to any generation. If a crisis is detected, the agent circumvents model generation and directly surfaces helpline numbers (Tele-MANAS \cite{tele_manas}: 14416 and iCall TISS: 9152987821).
+
+\section{Evaluation}
+\label{sec:eval}
+
+\subsection{RQ1: Design-Space Analysis}
+We analyzed the under-triage behavior inherent in the standard weighted average formulation. Table~\ref{tab:under_triage} shows the percentage of configurations where the fused prediction fell below the standalone PHQ-9 severity tier.
+\begin{table}[htbp]
+\caption{Under-triage Percentages by PHQ Band}
+\label{tab:under_triage}
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Configuration} & \textbf{0--4} & \textbf{5--9} & \textbf{10--14} & \textbf{15--19} & \textbf{20--27} \\
+\midrule
+Deployed (HS $S\geq20$) & 0.0 & 37.0 & 55.3 & 85.2 & 0.0 \\
+R0 PHQ floor (revised) & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+The cause is algebraic: with $w_X=0.50$, the PHQ-9 alone cannot overturn the text modality when the text top score exceeds $0.288$. The R0 policy removes this under-triage by construction.
+
+\subsection{RQ2: Crisis Filter Results}
+We evaluated the crisis filter on the SDCNL \cite{sdcnl_paper} test split ($n=379$; 193 pos, 186 neg) and a Twitter dataset \cite{twitter_dataset} ($n=8785$; 3958 pos, 4827 neg).
+\begin{table}[htbp]
+\caption{Crisis Filter Sensitivity and Specificity (Wilson 95\% CI)}
+\label{tab:crisis_filter}
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Method} & \textbf{SDCNL Sens} & \textbf{SDCNL Spec} & \textbf{Tweet Sens} & \textbf{Tweet Spec} \\
+\midrule
+v1 (deployed) & 22.8 (17.4--29.2) & 86.6 (80.9--90.7) & 24.2 (22.8--25.5) & 87.9 (87.0--88.8) \\
+v2 (clause) & 55.4 (48.4--62.3) & 75.8 (69.2--81.4) & 51.3 (49.7--52.8) & 91.7 (90.9--92.4) \\
+v2.1 (+self-harm) & 55.4 (48.4--62.3) & 72.0 (65.2--78.0) & 52.2 (50.7--53.8) & 91.7 \\
+TF-IDF+LR* & 78.8 (72.5--83.9) & 72.0 & 73.0 (71.6--74.4) & 24.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+Clause-scoped negation handling (v2) significantly improved sensitivity over v1 (McNemar $p=3.5\times10^{-11}$). The sensitivity improvement was accompanied by reduced specificity on SDCNL, illustrating the expected precision--recall trade-off of broader crisis-language coverage. The TF-IDF+LR baseline suffered severe domain shift on Twitter (AUROC 0.532, Spec 24.3), demonstrating that in-domain learning does not transfer reliably across corpora. \textit{*Trained on the SDCNL training split only.}
+
+\subsection{RQ3: Latency}
+Table \ref{tab:latency} details processing times measured on an Intel Xeon 2.1GHz single core (Python 3.11). Peak heap memory was 0.06 MB.
+\begin{table}[htbp]
+\caption{System Component Latency}
+\label{tab:latency}
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Component} & \textbf{Mean (ms)} & \textbf{P95 (ms)} \\
+\midrule
+PHQ mapping & 0.002 & 0.003 \\
+Acoustic scoring & 0.008 & 0.012 \\
+Crisis filter v2 & 0.450 & 1.320 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+The results highlight a critical limitation: the text filter cannot act as a comprehensive safety net. Even with improvements, a 55\% sensitivity implies nearly half of suicidal posts evade detection. Furthermore, the PHQ-9 floor policy is essential. Allowing unvalidated algorithmic signals to override and de-escalate a clinically validated instrument poses severe clinical risks. While escalations are permitted, lowering the risk tier should be strictly prevented. System designers must also remain vigilant regarding alert fatigue, which could manifest rapidly during broad deployment. Validating comparisons between rule versions proved more robust than evaluating absolute metrics across disparate social media domains.
+
+\section{Limitations and Future Work}
+The primary limitation is the absence of formal clinical validation; any future deployment requires a prospective clinical study with ethics board approval. The acoustic branch relies on hand-tuned coefficients, and three descriptors lack direct support in existing literature, necessitating evaluation on clinical corpora like DAIC-WOZ. The current prototype supports only English; integrating Hinglish and regional Indian languages is a crucial priority. Additionally, complex temporal contexts (e.g., ``I used to be suicidal'') remain unaddressed. Future iterations will incorporate ConText temporality rules and conduct rigorous red-team safety evaluations of the Saathi conversational agent.
+
+\section{Conclusion}
+Under the deployed 50\% text, 30\% audio, and 20\% PHQ-9 weighting, MindScreen systematically under-triages relative to the PHQ-9 in the mild-to-moderately-severe range; a PHQ-9 tier floor removes this by construction. The crisis-language filter's sensitivity roughly doubled with clause-scoped negation handling (v1: 22.8\%/24.2\% $\to$ v2: 55.4\%/51.3\%) but still misses approximately half of suicidal posts from public corpora. Both results argue for the PHQ-9 as the system's primary risk signal and against relying on the text filter alone as a safety mechanism. Clinical validation remains the prerequisite for any use beyond research.
+
+\section*{Ethics Statement}
+No human participants were recruited for this study. Public corpora were utilized strictly within their published terms of service. To preserve anonymity, no individual posts from the datasets are quoted verbatim in this manuscript; all example sentences were authored by the research team.
+
+\section*{Data and Code Availability}
+The evaluation scripts (including v1, v2, and v2.1 filters with SHA-256 hashes), the 26-item constructed suite, and all result files are available at \url{https://github.com/ruchita0131/mindscreen}. The SDCNL corpus is available from its respective authors.
+
+\bibliographystyle{IEEEtran}
+\bibliography{mindscreen_refs}
+
+\end{document}

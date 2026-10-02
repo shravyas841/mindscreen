@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { login, register } from '../api/auth';
+import { login } from '../api/auth';
 import { useAuthContext } from '../context/AuthContext';
 import { Activity } from 'lucide-react';
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,15 +18,9 @@ export default function Login() {
     e.preventDefault();
     setError('');
     try {
-      if (isLogin) {
-        const res = await login({ email, password });
-        loginUser(res.access_token, res.refresh_token);
-        navigate('/dashboard');
-      } else {
-        const res = await register({ email, password });
-        loginUser(res.access_token, res.refresh_token);
-        navigate('/dashboard');
-      }
+      const res = await login({ email, password });
+      loginUser(res.access_token, res.refresh_token);
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'An error occurred');
     }
@@ -45,7 +38,7 @@ export default function Login() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            {isLogin ? 'Welcome Back' : 'Create an Account'}
+            Welcome Back
           </CardTitle>
           <p className="text-gray-400 text-sm mt-2">MindScreen Mental Health Platform</p>
         </CardHeader>
@@ -79,17 +72,13 @@ export default function Login() {
             </div>
             
             <Button type="submit" className="w-full bg-brand-teal hover:bg-brand-tealL hover:text-brand-navy transition-all">
-              {isLogin ? 'Sign In' : 'Sign Up'}
+              Sign In
             </Button>
             
             <div className="text-center mt-4">
-              <button 
-                type="button" 
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-brand-amber hover:text-white text-sm transition-colors"
-              >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </button>
+              <Link to="/register" className="text-brand-amber hover:text-white text-sm transition-colors">
+                Don't have an account? Sign up
+              </Link>
             </div>
           </form>
         </CardContent>

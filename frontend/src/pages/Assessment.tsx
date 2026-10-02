@@ -7,7 +7,8 @@ import { Progress } from '../components/ui/Progress';
 import { ArrowRight, ArrowLeft, CheckCircle, Mic, Square, Trash2, SkipForward, AlertCircle } from 'lucide-react';
 import { usePredictFused } from '../hooks/useAssessment';
 import { AudioWaveformVisualizer } from '../components/tools/AudioWaveformVisualizer';
-import { AudioFeatureExtractor, AudioFeatures, featuresToNull } from '../utils/audioFeatures';
+import { AudioFeatureExtractor, AudioFeatures } from '../utils/audioFeatures';
+import { createResultsNavigationState } from '../utils/resultPresentation';
 
 const phqQuestions = [
   "Little interest or pleasure in doing things?",
@@ -27,15 +28,6 @@ const phqOptions = [
   { value: 2, label: 'More than half the days' },
   { value: 3, label: 'Nearly every day' }
 ];
-
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
 
 export default function Assessment() {
   const navigate = useNavigate();
@@ -83,7 +75,12 @@ export default function Assessment() {
   const startRecording = async () => {
     setMicError('');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        // Disable browser voice processing: automatic gain control normalises
+        // loudness and would mask the RMS-based features (revision).
+        audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false, channelCount: 1 },
+        video: false,
+      });
 
       // Pick best supported MIME type
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -156,8 +153,10 @@ export default function Assessment() {
   const handleSubmit = async () => {
     setSubmitError('');
     try {
-      // Use real acoustic features if available; neutral baseline if skipped
-      const features = audioSkipped ? featuresToNull() : (audioFeatures ?? featuresToNull());
+      // Use real acoustic features if available
+      // Revision: a skipped or unusable recording is sent as null so that the
+      // server treats audio as missing and renormalises the fusion weights.
+      const features = audioSkipped ? null : (audioFeatures ?? null);
 
       const res = await submitAssessment({
         phq: { answers },
@@ -165,7 +164,7 @@ export default function Assessment() {
         audioFeatures: features,
       });
 
-      navigate('/results', { state: { result: res } });
+      navigate('/results', { state: createResultsNavigationState(res, answers) });
     } catch (err: any) {
       console.error('Submission failed', err);
       setSubmitError('Submission failed. Please check that the backend server is running.');
@@ -259,7 +258,7 @@ export default function Assessment() {
                 <span className="text-purple-400 font-medium mb-4">Step 11 of 11 — Voice Analysis</span>
                 <h2 className="text-2xl font-semibold mb-2">Speak freely for 10–30 seconds</h2>
                 <p className="text-gray-400 mb-6 text-sm">
-                  Describe how you have been feeling lately. Our acoustic AI will analyse tone, pitch, and speech patterns. You can also skip this step.
+                  Describe how you have been feeling lately. The browser will calculate RMS level and variability, zero-crossing rate, spectral centroid, spectral rolloff, and speaking ratio. You can also skip this step.
                 </p>
 
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 bg-white/5 border border-white/10 rounded-xl p-8">

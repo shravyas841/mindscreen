@@ -1,21 +1,37 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 from schemas.auth import UserCreate, LoginRequest, TokenResponse
-from services.auth_service import hash_password, verify_password, create_access_token, create_refresh_token, get_current_user
+from services.auth_service import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
 from pydantic import BaseModel
+from middleware.rate_limit import limiter
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=TokenResponse)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
+    if not user_data.has_consented:
+        raise HTTPException(status_code=400, detail="Research disclaimer acknowledgement is required")
     db_user = db.query(User).filter(User.email == user_data.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
         
     hashed_pw = hash_password(user_data.password)
-    new_user = User(email=user_data.email, hashed_password=hashed_pw)
+    new_user = User(
+        email=user_data.email,
+        hashed_password=hashed_pw,
+        name=user_data.name,
+        has_consented=user_data.has_consented,
+    )
     
     db.add(new_user)
     db.commit()
@@ -27,7 +43,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=TokenResponse)
-async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, login_data: LoginRequest, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == login_data.email).first()
     
     if not db_user or not verify_password(login_data.password, db_user.hashed_password):
@@ -42,9 +59,18 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(request: RefreshRequest, db: Session = Depends(get_db)):
-    # In a real app, verify the refresh token properly
-    raise HTTPException(status_code=501, detail="Not implemented for simplicity, implement token refresh logic")
+@limiter.limit("20/minute")
+async def refresh_token(request: Request, refresh_request: RefreshRequest, db: Session = Depends(get_db)):
+    payload = decode_token(refresh_request.refresh_token, "refresh")
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid or expired credentials")
+    token_data = {"sub": str(user.id)}
+    return {
+        "access_token": create_access_token(token_data),
+        "refresh_token": create_refresh_token(token_data),
+        "token_type": "bearer",
+    }
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):

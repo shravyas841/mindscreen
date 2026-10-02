@@ -4,7 +4,7 @@ services:
     name: mindscreen-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements-lock.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -28,8 +28,6 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://mindscreen.vercel.app
       - key: CRISIS_HELPLINE_1
-        value: "iCall: 9152987821"
+        value: "Tele-MANAS: 14416 or 1-800-891-4416 (free, 24/7)"
       - key: CRISIS_HELPLINE_2
-        value: "NIMHANS: 080-46110007"
-      - key: CRISIS_HELPLINE_3
-        value: "Vandrevala Foundation: 1860-2662-345"
+        value: "iCall (TISS): 9152987821"

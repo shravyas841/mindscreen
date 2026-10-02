@@ -49,10 +49,11 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/register', {
+      await apiClient.post('/api/auth/register', {
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        has_consented: consent,
       });
       
       setSuccess(true);

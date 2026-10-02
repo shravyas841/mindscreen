@@ -1,11 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 import requests
 import logging
 import random
 import os
 from config import settings
+from middleware.rate_limit import limiter
+from models.user import User
+from services.auth_service import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +17,12 @@ router = APIRouter(prefix="/api/chat", tags=["Saathi Wellbeing Companion"])
 # ── Data Models ────────────────────────────────────────────────────────────────
 
 class ChatMessage(BaseModel):
-    sender: str = Field(..., description="'user' or 'saathi'")
-    content: str = Field(..., description="Message text")
+    sender: Literal["user", "saathi"] = Field(..., description="'user' or 'saathi'")
+    content: str = Field(..., min_length=1, max_length=5000, description="Message text")
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., description="User message")
-    history: Optional[List[ChatMessage]] = Field(default=[], description="Conversation history")
+    message: str = Field(..., min_length=1, max_length=5000, description="User message")
+    history: List[ChatMessage] = Field(default_factory=list, max_length=50, description="Conversation history")
     current_mood: Optional[str] = Field(default="neutral")
 
 class RecommendedActivity(BaseModel):
@@ -38,8 +41,8 @@ class ChatResponse(BaseModel):
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-TELE_MANAS = "Tele-MANAS (Govt. of India): 14416 or 1800-891-4416 (Free, 24/7)"
-KIRAN      = "KIRAN Mental Health Helpline: 1800-599-0019 (Free, 24/7)"
+TELE_MANAS = "Tele-MANAS (Govt. of India): 14416 or 1-800-891-4416 (Free, 24/7)"
+ICALL      = "iCall (TISS): 9152987821 (Mon–Sat, 8am–10pm)"
 
 SYSTEM_PROMPT = """You are Saathi (साथी), a warm, empathetic, and culturally aware Indian mental wellbeing companion on the MindScreen platform.
 
@@ -107,7 +110,7 @@ FALLBACK_RESPONSES = {
     ],
     "anxiety": [
         "I can hear how overwhelming this wave of anxiety feels right now. Anxiety has a way of making everything feel urgent and out of control all at once.\n\nLet's slow down together. Take a breath with me—in through the nose for 4 counts, hold for 7, out through the mouth for 8. You don't have to solve anything in this moment.\n\nWhat does this feeling in your body right now remind you of? When did it start?",
-        "That feeling of being overwhelmed—when everything presses in at once—is so real and so valid.\n\nYour nervous system is trying to protect you, but it sometimes misfires and treats everything as an emergency. You are actually safe right now, in this moment.\n\nWhat's the single biggest thing your mind keeps returning to?",
+        "That feeling of being overwhelmed—when everything presses in at once—is so real and so valid.\n\nYour nervous system may be reacting as though everything is an emergency. If you can, pause and notice what is around you while taking one slow breath.\n\nWhat's the single biggest thing your mind keeps returning to?",
         "Panic and anxiety are your body's alarm system going off, even when the immediate danger isn't as large as it feels.\n\nYou reached out here, which means part of you knows you can move through this. I'm right here with you.\n\nLet's breathe first, then talk. Can you feel your feet on the ground right now?",
     ],
     "lonely": [
@@ -245,7 +248,8 @@ def call_hf_llm(message: str, history: List[ChatMessage], hf_token: str) -> Opti
 # ── Main Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/companion", response_model=ChatResponse)
-def talk_to_saathi(req: ChatRequest):
+@limiter.limit("30/minute")
+def talk_to_saathi(request: Request, req: ChatRequest, current_user: User = Depends(get_current_user)):
     """
     Saathi (साथी) — Your Wellbeing Companion.
     
@@ -277,7 +281,7 @@ def talk_to_saathi(req: ChatRequest):
                 "I am right here with you."
             ),
             crisis_flag=True,
-            helpline_info=f"{TELE_MANAS} | {KIRAN}",
+            helpline_info=f"{TELE_MANAS} | {ICALL}",
             recommended_activity=RecommendedActivity(
                 title="432Hz Calm Sanctuary Breathwork",
                 category="Immediate Crisis Grounding",

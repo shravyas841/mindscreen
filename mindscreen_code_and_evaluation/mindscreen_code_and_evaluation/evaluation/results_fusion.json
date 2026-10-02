@@ -1,0 +1,309 @@
+{
+ "methodology": {
+  "implementation": "backend/services",
+  "uniform_synthetic_weighting": true,
+  "states_per_phq_total": 6069,
+  "configurations_per_band": {
+   "0-4": 30345,
+   "5-9": 30345,
+   "10-14": 30345,
+   "15-19": 30345,
+   "20-27": 48552
+  }
+ },
+ "neutral_audio_vector": [
+  0.095,
+  0.3575,
+  0.4425,
+  0.105
+ ],
+ "tableV": {
+  "P1": {
+   "Equal": {
+    "cls": 3,
+    "raw": 0.6767,
+    "soft": 0.6163,
+    "hre": true
+   },
+   "Text-dom": {
+    "cls": 3,
+    "raw": 0.746,
+    "soft": 0.6765,
+    "hre": true
+   },
+   "Audio-dom": {
+    "cls": 3,
+    "raw": 0.558,
+    "soft": 0.5155,
+    "hre": true
+   },
+   "PHQ-dom": {
+    "cls": 3,
+    "raw": 0.726,
+    "soft": 0.6634,
+    "hre": true
+   },
+   "MindScreen": {
+    "cls": 3,
+    "raw": 0.699,
+    "soft": 0.6343,
+    "hre": true
+   }
+  },
+  "P2": {
+   "Equal": {
+    "cls": 0,
+    "raw": 0.74,
+    "soft": 0.6761,
+    "hre": false
+   },
+   "Text-dom": {
+    "cls": 0,
+    "raw": 0.804,
+    "soft": 0.7368,
+    "hre": false
+   },
+   "Audio-dom": {
+    "cls": 0,
+    "raw": 0.652,
+    "soft": 0.596,
+    "hre": false
+   },
+   "PHQ-dom": {
+    "cls": 0,
+    "raw": 0.764,
+    "soft": 0.7009,
+    "hre": false
+   },
+   "MindScreen": {
+    "cls": 0,
+    "raw": 0.766,
+    "soft": 0.6997,
+    "hre": false
+   }
+  },
+  "P3": {
+   "Equal": {
+    "cls": 0,
+    "raw": 0.4067,
+    "soft": 0.3799,
+    "hre": true
+   },
+   "Text-dom": {
+    "cls": 0,
+    "raw": 0.604,
+    "soft": 0.5436,
+    "hre": true
+   },
+   "Audio-dom": {
+    "cls": 0,
+    "raw": 0.372,
+    "soft": 0.3511,
+    "hre": true
+   },
+   "PHQ-dom": {
+    "cls": 3,
+    "raw": 0.492,
+    "soft": 0.4493,
+    "hre": true
+   },
+   "MindScreen": {
+    "cls": 0,
+    "raw": 0.546,
+    "soft": 0.4937,
+    "hre": true
+   }
+  },
+  "P4": {
+   "Equal": {
+    "cls": 0,
+    "raw": 0.3433,
+    "soft": 0.3275,
+    "hre": false
+   },
+   "Text-dom": {
+    "cls": 0,
+    "raw": 0.566,
+    "soft": 0.5106,
+    "hre": false
+   },
+   "Audio-dom": {
+    "cls": 2,
+    "raw": 0.294,
+    "soft": 0.2865,
+    "hre": false
+   },
+   "PHQ-dom": {
+    "cls": 1,
+    "raw": 0.454,
+    "soft": 0.418,
+    "hre": false
+   },
+   "MindScreen": {
+    "cls": 0,
+    "raw": 0.479,
+    "soft": 0.4373,
+    "hre": false
+   }
+  },
+  "P5": {
+   "Equal": {
+    "cls": 2,
+    "raw": 0.3567,
+    "soft": 0.345,
+    "hre": true
+   },
+   "Text-dom": {
+    "cls": 2,
+    "raw": 0.494,
+    "soft": 0.4557,
+    "hre": true
+   },
+   "Audio-dom": {
+    "cls": 1,
+    "raw": 0.348,
+    "soft": 0.3367,
+    "hre": true
+   },
+   "PHQ-dom": {
+    "cls": 0,
+    "raw": 0.526,
+    "soft": 0.485,
+    "hre": true
+   },
+   "MindScreen": {
+    "cls": 2,
+    "raw": 0.456,
+    "soft": 0.4245,
+    "hre": true
+   }
+  }
+ },
+ "under": {
+  "historical_baseline(HS>=20,no_R0)": {
+   "0-4": 0.0,
+   "5-9": 0.3697,
+   "10-14": 0.553,
+   "15-19": 0.8519,
+   "20-27": 0.0
+  },
+  "HS>=15": {
+   "0-4": 0.0,
+   "5-9": 0.3697,
+   "10-14": 0.553,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "PHQ_floor_R0": {
+   "0-4": 0.0,
+   "5-9": 0.0,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "deployed_R0": {
+   "0-4": 0.0,
+   "5-9": 0.0,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "skipped_audio_neutral_features(deployed_client)": {
+   "0-4": 0.0,
+   "5-9": 0.3025,
+   "10-14": 0.5042,
+   "15-19": 0.9076,
+   "20-27": 0.0
+  },
+  "skipped_audio_server_prior(API)": {
+   "0-4": 0.0,
+   "5-9": 0.3277,
+   "10-14": 0.6639,
+   "15-19": 0.9328,
+   "20-27": 0.0
+  },
+  "skipped_audio_renormalised(revised,no_R0)": {
+   "0-4": 0.0,
+   "5-9": 0.3782,
+   "10-14": 0.605,
+   "15-19": 0.8403,
+   "20-27": 0.0
+  },
+  "skipped_audio_renormalised+R0(revised)": {
+   "0-4": 0.0,
+   "5-9": 0.0,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  }
+ },
+ "over": {
+  "historical_baseline(HS>=20,no_R0)": {
+   "0-4": 0.4455,
+   "5-9": 0.258,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "HS>=15": {
+   "0-4": 0.4455,
+   "5-9": 0.258,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "PHQ_floor_R0": {
+   "0-4": 0.4455,
+   "5-9": 0.258,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "deployed_R0": {
+   "0-4": 0.4455,
+   "5-9": 0.258,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "skipped_audio_neutral_features(deployed_client)": {
+   "0-4": 0.5714,
+   "5-9": 0.2689,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "skipped_audio_server_prior(API)": {
+   "0-4": 0.4874,
+   "5-9": 0.2185,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "skipped_audio_renormalised(revised,no_R0)": {
+   "0-4": 0.4874,
+   "5-9": 0.2521,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  },
+  "skipped_audio_renormalised+R0(revised)": {
+   "0-4": 0.4874,
+   "5-9": 0.2521,
+   "10-14": 0.0,
+   "15-19": 0.0,
+   "20-27": 0.0
+  }
+ },
+ "agreement": {
+  "PHQ only": 1.0,
+  "Text only": 0.1786,
+  "Audio only": 0.2122,
+  "Text+PHQ (.71/.29)": 0.3022,
+  "Audio+PHQ (.6/.4)": 0.7927,
+  "Text+Audio (.625/.375)": 0.1821,
+  "All (.5/.3/.2)": 0.3141
+ },
+ "n_text_states": 119,
+ "n_audio_states": 51
+}

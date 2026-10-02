@@ -1,14 +1,22 @@
 import React from 'react';
 import { Button } from '../ui/Button';
 import { RiskResponse } from '../../types/assessment';
-import { Printer, X, ShieldAlert, CheckCircle2, FileText } from 'lucide-react';
+import { Printer, X, ShieldAlert, FileText } from 'lucide-react';
+import {
+  ASSESSMENT_REPORT_DISCLAIMER,
+  ASSESSMENT_REPORT_HEADING,
+  ASSESSMENT_REPORT_STATUS,
+  ASSESSMENT_REPORT_TITLE,
+  calculatePhqTotal,
+  formatPriorityScore,
+  getCrisisAttribution,
+} from '../../utils/resultPresentation';
 
 interface ClinicalReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   result: RiskResponse;
   phqAnswers?: number[];
-  journalText?: string;
 }
 
 const PHQ_ITEM_DESCRIPTIONS = [
@@ -28,7 +36,6 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
   onClose,
   result,
   phqAnswers,
-  journalText,
 }) => {
   if (!isOpen) return null;
 
@@ -36,8 +43,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
     window.print();
   };
 
-  const totalPHQ = phqAnswers ? phqAnswers.reduce((a, b) => a + b, 0) : null;
-  const item9Endorsed = phqAnswers && phqAnswers[8] > 0;
+  const totalPHQ = calculatePhqTotal(phqAnswers);
   const now = new Date().toLocaleString();
 
   return (
@@ -48,7 +54,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5 print:hidden">
           <div className="flex items-center gap-2 text-white font-semibold">
             <FileText className="w-5 h-5 text-brand-tealL" />
-            <span>Clinical Decision Support Summary (Printable)</span>
+            <span>{ASSESSMENT_REPORT_TITLE} (Printable)</span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -74,16 +80,20 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           <div className="border-b border-white/20 pb-4 flex justify-between items-start print:border-black">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-white print:text-black">
-                MindScreen Clinical Screening Summary
+                {ASSESSMENT_REPORT_HEADING}
               </h1>
-              <p className="text-xs text-gray-400 print:text-gray-600 mt-0.5">
-                Decision-Level Multimodal Screening Support Protocol (FHIR-Compatible Format)
+              <p className="text-xs font-semibold text-brand-amber print:text-black mt-0.5">
+                {ASSESSMENT_REPORT_STATUS}
               </p>
             </div>
             <div className="text-right text-xs text-gray-400 print:text-gray-600">
               <p>Generated: {now}</p>
               <p>Classification: Preliminary Screening</p>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-brand-amber/30 bg-brand-amber/10 p-3 text-xs leading-relaxed text-gray-200 print:border-gray-400 print:bg-gray-50 print:text-black">
+            {ASSESSMENT_REPORT_DISCLAIMER}
           </div>
 
           {/* Screening Classification Box */}
@@ -95,9 +105,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Confidence</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Priority Score</p>
               <p className="text-xl font-bold text-white print:text-black">
-                {(result.confidence * 100).toFixed(1)}%
+                {formatPriorityScore(result.priority_score)}
               </p>
             </div>
             <div>
@@ -107,9 +117,9 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Crisis Flag (HRE)</p>
+              <p className="text-xs text-gray-400 print:text-gray-500 uppercase">Explicit Crisis Signal</p>
               <p className={`text-xl font-bold ${result.crisis_flag ? 'text-red-400 print:text-red-600' : 'text-emerald-400 print:text-green-600'}`}>
-                {result.crisis_flag ? 'FLAGGED (Active)' : 'CLEAR'}
+                {result.crisis_flag ? 'DETECTED' : 'NOT DETECTED'}
               </p>
             </div>
           </div>
@@ -123,14 +133,10 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
                   High-Risk Escalation (HRE) Protocol Active
                 </p>
                 <p className="text-red-200/80 print:text-red-600 mt-0.5">
-                  {item9Endorsed
-                    ? 'Reason: Patient endorsed suicidal ideation on PHQ-9 Item 9.'
-                    : totalPHQ !== null && totalPHQ >= 20
-                    ? 'Reason: Severe psychometric score burden (PHQ-9 S >= 20).'
-                    : 'Reason: Verified linguistic crisis intent detected in text entry.'}
+                  {getCrisisAttribution(phqAnswers, result.crisis_trigger)}
                 </p>
                 <p className="mt-1 text-gray-300 print:text-gray-700 font-medium">
-                  Routing: Tele-MANAS (14416) | KIRAN (1800-599-0019)
+                  Routing: Tele-MANAS (14416 / 1-800-891-4416) | iCall TISS (9152987821)
                 </p>
               </div>
             </div>
@@ -140,7 +146,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {phqAnswers && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                1. PHQ-9 Clinical Questionnaire Breakdown
+                1. PHQ-9 Questionnaire Breakdown
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {phqAnswers.map((ans, idx) => (
@@ -191,11 +197,11 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
             </div>
           )}
 
-          {/* Section 3: Acoustic Biomarkers */}
+          {/* Section 3: Acoustic descriptors */}
           {result.audio_features && (
             <div>
               <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-                3. Vocal Acoustic Biomarker Descriptors (Web Audio API)
+                3. Exploratory Acoustic Descriptors (Web Audio API)
               </h3>
               <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                 <div className="p-2 rounded bg-white/5 border border-white/10 print:border-gray-200">
@@ -205,7 +211,7 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
                   RMS Dynamics: {(result.audio_features.rms_std * 100).toFixed(1)}%
                 </div>
                 <div className="p-2 rounded bg-white/5 border border-white/10 print:border-gray-200">
-                  Voicing Rate (ZCR): {(result.audio_features.zcr_mean * 100).toFixed(1)}%
+                  Zero-Crossing Rate: {(result.audio_features.zcr_mean * 100).toFixed(1)}%
                 </div>
                 <div className="p-2 rounded bg-white/5 border border-white/10 print:border-gray-200">
                   Spectral Centroid: {(result.audio_features.spectral_centroid * 100).toFixed(1)}%
@@ -220,10 +226,10 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
             </div>
           )}
 
-          {/* Section 4: Calibrated Probability Distribution */}
+          {/* Section 4: transformed tier scores */}
           <div>
             <h3 className="font-semibold text-sm mb-2 text-brand-tealL print:text-black">
-              4. Calibrated Probability Distribution (Temperature-Scaled T=1.20)
+              4. Tier Scores (Fixed Temperature Transform, T=1.20; Not Clinically Calibrated)
             </h3>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               {Object.entries(result.probabilities).map(([tier, prob]) => (
@@ -238,14 +244,14 @@ export const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({
           {/* Clinician Review Sign-off Block */}
           <div className="pt-6 border-t border-white/20 print:border-black grid grid-cols-2 gap-8 text-xs text-gray-400 print:text-gray-700">
             <div>
-              <p className="font-semibold text-white print:text-black mb-1">Non-Diagnostic Disclaimer:</p>
+              <p className="font-semibold text-white print:text-black mb-1">Research Prototype Disclaimer:</p>
               <p className="leading-relaxed">
-                MindScreen is an algorithmic screening support prototype. This summary does not constitute a clinical psychiatric diagnosis. Professional evaluation by a registered psychiatrist or psychologist is required under DSM-5 / ICD-11 guidelines.
+                {ASSESSMENT_REPORT_DISCLAIMER}
               </p>
             </div>
             <div className="flex flex-col justify-end text-right">
               <div className="border-b border-gray-600 print:border-black w-48 ml-auto mb-2" />
-              <p className="font-medium text-white print:text-black">Reviewing Clinician / Counselor</p>
+              <p className="font-medium text-white print:text-black">Optional Qualified Professional Review</p>
               <p className="text-[11px] text-gray-500">Date & Signature</p>
             </div>
           </div>

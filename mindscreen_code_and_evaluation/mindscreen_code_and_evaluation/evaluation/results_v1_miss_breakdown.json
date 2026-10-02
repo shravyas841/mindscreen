@@ -1,0 +1,18 @@
+{
+ "SDCNL-test": {
+  "n_pos": 193,
+  "detected": 44,
+  "negation": 17,
+  "third_party": 62,
+  "no_trigger": 70,
+  "v2_lexicon_ceiling": 0.611
+ },
+ "Twitter": {
+  "n_pos": 3958,
+  "detected": 956,
+  "negation": 297,
+  "third_party": 1111,
+  "no_trigger": 1594,
+  "v2_lexicon_ceiling": 0.565
+ }
+}

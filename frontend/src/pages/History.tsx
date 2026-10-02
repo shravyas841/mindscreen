@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { History as HistoryIcon, ChevronDown, ChevronUp, AlertCircle, Calendar, ShieldAlert } from 'lucide-react';
-import { RiskResponse } from '../types/assessment';
 
 // Assuming the API returns a list of assessments with this shape
 interface AssessmentHistoryItem {
@@ -34,21 +33,8 @@ export default function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // Fallback to mock data if endpoint doesn't exist yet, but try fetching first
-        const res = await apiClient.get('/phq/history').catch(() => ({ data: [] }));
-        
-        let data = res.data;
-        
-        // Mock data if empty for demonstration
-        if (!data || data.length === 0) {
-           data = [
-             { id: 1, risk_level: 'minimal', confidence: 0.91, probabilities: { minimal: 0.91, mild: 0.05, moderate: 0.03, severe: 0.01 }, crisis_flag: false, created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-             { id: 2, risk_level: 'mild', confidence: 0.75, probabilities: { minimal: 0.20, mild: 0.75, moderate: 0.04, severe: 0.01 }, crisis_flag: false, created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
-             { id: 3, risk_level: 'moderate', confidence: 0.60, probabilities: { minimal: 0.10, mild: 0.20, moderate: 0.60, severe: 0.10 }, crisis_flag: true, created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() }
-           ];
-        }
-        
-        setHistory(data);
+        const res = await apiClient.get('/api/phq/history');
+        setHistory(res.data ?? []);
       } catch (err) {
         console.error("Failed to fetch history:", err);
         setError("Could not load your assessment history.");
@@ -179,7 +165,7 @@ export default function History() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-white">{formatDate(item.created_at)}</h3>
-                        <p className="text-sm text-gray-400">AI Confidence: {(item.confidence * 100).toFixed(1)}%</p>
+                        <p className="text-sm text-gray-400">Stored tier score: {(item.confidence * 100).toFixed(1)}%</p>
                       </div>
                     </div>
                     

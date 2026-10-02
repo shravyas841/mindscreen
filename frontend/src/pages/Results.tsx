@@ -6,6 +6,7 @@ import { AlertTriangle, Phone, Home, RefreshCw, Brain, Mic, ClipboardList, Check
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AcousticRadarChart } from '../components/tools/AcousticRadarChart';
 import { ClinicalReportModal } from '../components/tools/ClinicalReportModal';
+import { formatPercentage, formatPriorityScore, getAudioUsageSummary, getEffectiveFusionWeights } from '../utils/resultPresentation';
 
 const RISK_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; barColor: string; description: string; advice: string[] }> = {
   minimal: {
@@ -36,7 +37,7 @@ const RISK_CONFIG: Record<string, { label: string; color: string; bg: string; bo
     advice: ['Consult a mental health professional or counsellor', 'Reach out to a trusted person in your life', 'Avoid isolation — schedule social activities', 'Contact iCall: 9152987821 for support'],
   },
   severe: {
-    label: 'Severe',
+    label: 'High Priority',
     color: 'text-red-400',
     bg: 'bg-red-400/10',
     border: 'border-red-500/50',
@@ -50,6 +51,7 @@ export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
   const result = location.state?.result as RiskResponse;
+  const phqAnswers = location.state?.phqAnswers as number[] | undefined;
   const [showReport, setShowReport] = useState(false);
 
   if (!result) return <Navigate to="/dashboard" replace />;
@@ -65,6 +67,8 @@ export default function Results() {
   ];
 
   const shapWords = result.shap_explanation?.words ?? [];
+  const audioPresent = result.audio_present ?? Boolean(result.audio_features);
+  const effectiveWeights = getEffectiveFusionWeights(audioPresent);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in">
@@ -76,11 +80,13 @@ export default function Results() {
           <span className="text-brand-tealL font-medium">Assessment Complete</span>
         </div>
         <h1 className="text-4xl font-bold text-white">Your Screening Results</h1>
-        <p className="text-gray-400 mt-2">Based on your PHQ-9 responses, text analysis, and voice recording</p>
+        <p className="text-gray-400 mt-2">
+          {getAudioUsageSummary(audioPresent)}
+        </p>
       </div>
 
-      {/* Crisis Banner — shown FIRST if severe */}
-      {result.crisis_flag && (
+      {/* Support resources appear for explicit crisis signals or any High Priority result. */}
+      {result.resource_display_flag && (
         <div className="glass-card border-red-500/50 bg-red-500/5 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
@@ -89,10 +95,10 @@ export default function Results() {
             <div className="flex-1">
               <h3 className="text-xl font-bold text-red-400 mb-1">Immediate Support Available</h3>
               <p className="text-gray-300 text-sm mb-4">
-                Your responses suggest you may be going through a very difficult time. Please don't face this alone. Reach out now.
+                This screening result indicates that prompt human support may be helpful. Please reach out now.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(result.helplines ?? ['iCall: 9152987821', 'NIMHANS: 080-46110007', 'Vandrevala Foundation: 1860-2662-345']).map((h, i) => (
+                {(result.helplines ?? ['Tele-MANAS: 14416 or 1-800-891-4416 (free, 24/7)', 'iCall (TISS): 9152987821']).map((h, i) => (
                   <div key={i} className="flex items-center gap-2 bg-red-500/15 border border-red-500/25 rounded-xl px-4 py-3">
                     <Phone className="w-4 h-4 text-red-400 flex-shrink-0" />
                     <span className="text-sm font-medium text-white">{h}</span>
@@ -112,7 +118,7 @@ export default function Results() {
           <div className={`w-20 h-20 rounded-2xl ${config.bg} border ${config.border} flex items-center justify-center mb-5`}>
             <Brain className={`w-10 h-10 ${config.color}`} />
           </div>
-          <p className="text-sm text-gray-400 uppercase tracking-widest mb-2">AI Risk Assessment</p>
+          <p className="text-sm text-gray-400 uppercase tracking-widest mb-2">Screening Priority Tier</p>
           <h2 className={`text-5xl font-extrabold uppercase tracking-wide mb-3 ${config.color}`}>
             {config.label}
           </h2>
@@ -120,18 +126,18 @@ export default function Results() {
             <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden w-32">
               <div
                 className={`h-full rounded-full bg-gradient-to-r ${config.color === 'text-emerald-400' ? 'from-emerald-400 to-emerald-300' : config.color === 'text-amber-400' ? 'from-amber-400 to-amber-300' : config.color === 'text-orange-400' ? 'from-orange-400 to-orange-300' : 'from-red-400 to-red-300'}`}
-                style={{ width: `${(result.confidence * 100).toFixed(0)}%` }}
+                style={{ width: `${(result.priority_score * 100).toFixed(0)}%` }}
               />
             </div>
-            <span className="text-sm text-gray-300 font-medium">{(result.confidence * 100).toFixed(0)}% confidence</span>
+            <span className="text-sm text-gray-300 font-medium">{formatPriorityScore(result.priority_score)} priority score</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed">{config.description}</p>
         </div>
 
-        {/* Probability Chart */}
+        {/* Tier-score chart */}
         <div className="glass-card p-6">
-          <h3 className="text-base font-semibold mb-1">Probability Distribution</h3>
-          <p className="text-xs text-gray-500 mb-4">How the AI model scored each category</p>
+          <h3 className="text-base font-semibold mb-1">Tier-score Distribution</h3>
+          <p className="text-xs text-gray-500 mb-4">Heuristic model scores; these are not calibrated clinical probabilities</p>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={probData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
@@ -140,7 +146,7 @@ export default function Results() {
                 <RechartsTooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   contentStyle={{ backgroundColor: '#0f2336', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '12px' }}
-                  formatter={(val: number) => [`${val}%`, 'Probability']}
+                  formatter={(val: number) => [`${val}%`, 'Tier score']}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
                   {probData.map((d, i) => <Cell key={i} fill={d.fill} />)}
@@ -168,12 +174,12 @@ export default function Results() {
           <Info className="w-4 h-4 text-brand-tealL" />
           <h3 className="text-base font-semibold">How This Result Was Calculated</h3>
         </div>
-        <p className="text-sm text-gray-400 mb-5">MindScreen uses a multimodal weighted fusion model combining three inputs:</p>
+        <p className="text-sm text-gray-400 mb-5">MindScreen combines the available inputs below. Text path used: {result.text_inference_source ?? 'unknown'}.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: ClipboardList, label: 'PHQ-9 Questionnaire', weight: '20%', desc: 'Your 9 clinical responses mapped across the 4-tier screening severity scale', color: 'text-brand-amber', bg: 'bg-brand-amber/10' },
-            { icon: Brain, label: 'DistilRoBERTa Emotion NLP', weight: '50%', desc: 'Your journal entry analysed for affective valence and distress markers via transformer inference', color: 'text-brand-tealL', bg: 'bg-brand-teal/10' },
-            { icon: Mic, label: 'Acoustic Voice Analysis', weight: '30%', desc: 'Web Audio acoustic biomarkers (RMS loudness, energy variability, and spectral centroid)', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+            { icon: ClipboardList, label: 'PHQ-9 Questionnaire', weight: formatPercentage(effectiveWeights.phq), desc: 'Your 9 self-report responses mapped across the 4-tier screening severity scale', color: 'text-brand-amber', bg: 'bg-brand-amber/10' },
+            { icon: Brain, label: 'DistilRoBERTa Emotion NLP', weight: formatPercentage(effectiveWeights.text), desc: 'Your journal entry analysed for affective valence and distress markers via transformer inference', color: 'text-brand-tealL', bg: 'bg-brand-teal/10' },
+            { icon: Mic, label: 'Exploratory Acoustic Descriptors', weight: formatPercentage(effectiveWeights.audio), desc: audioPresent ? 'Browser-derived RMS level and variability, zero-crossing rate, spectral centroid, spectral rolloff, and speaking ratio' : 'Audio was not used for this result', color: 'text-purple-400', bg: 'bg-purple-400/10' },
           ].map((m) => {
             const Icon = m.icon;
             return (
@@ -192,29 +198,29 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Acoustic Somatic Biomarkers Radar */}
+      {/* Acoustic descriptor radar */}
       {result.audio_features && (
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-2">
             <Mic className="w-4 h-4 text-purple-400" />
-            <h3 className="text-base font-semibold">Acoustic Biomarkers — Vocal Footprint</h3>
+            <h3 className="text-base font-semibold">Exploratory Acoustic Descriptors</h3>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Six-dimensional acoustic analysis extracted directly from your vocal recording via Web Audio API, mapped against healthy conversational baselines.
+            Six browser-extracted descriptors mapped with hand-set rules that have not been clinically validated.
           </p>
           <AcousticRadarChart features={result.audio_features} />
         </div>
       )}
 
-      {/* AI Explainability — Lexical Attribution */}
+      {/* Heuristic lexical attribution */}
       {shapWords.length > 0 && (
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-4 h-4 text-brand-tealL" />
-            <h3 className="text-base font-semibold">AI Explainability — Key Influential Words</h3>
+            <h3 className="text-base font-semibold">Heuristic Lexical Indicators</h3>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            The following words from your text entry had the most influence on the screening prediction. Red indicates higher distress indicators; green indicates protective/positive valence.
+            These keyword indicators provide a simple display aid; they are not SHAP values or a causal explanation of the remote model.
           </p>
           <div className="flex flex-wrap gap-2">
             {shapWords.map((w: { word: string; value: number }, i: number) => (
@@ -258,7 +264,7 @@ export default function Results() {
           className="bg-purple-600 hover:bg-purple-700 text-white font-semibold flex items-center gap-2"
         >
           <FileText className="w-4 h-4" />
-          Clinical Summary (PDF)
+          Assessment Report (PDF)
         </Button>
         <Button className="bg-brand-teal hover:bg-brand-tealL text-white font-semibold" onClick={() => navigate('/assessment')}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -266,11 +272,12 @@ export default function Results() {
         </Button>
       </div>
 
-      {/* Clinical Report Export Modal */}
+      {/* Assessment Report Export Modal */}
       <ClinicalReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
         result={result}
+        phqAnswers={phqAnswers}
       />
     </div>
   );

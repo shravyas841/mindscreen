@@ -14,7 +14,7 @@ def calculate_phq_score(answers: List[int]) -> PHQResult:
     
     if total < 5:
         severity = "minimal"
-        probabilities = {"minimal": 0.8, "mild": 0.15, "moderate": 0.05, "severe": 0.0}
+        probabilities = {"minimal": 0.8, "mild": 0.15, "moderate": 0.04, "severe": 0.01}
     elif total < 10:
         severity = "mild"
         probabilities = {"minimal": 0.1, "mild": 0.7, "moderate": 0.15, "severe": 0.05}

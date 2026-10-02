@@ -1,12 +1,9 @@
 """
-Statistical Calibration and Uncertainty Quantification Service
+Tier-score Transformation Service
 ---------------------------------------------------------------
-Implements Temperature Scaling and Expected Calibration Error (ECE)
-following Guo et al. (ICML 2017) "On Calibration of Modern Neural Networks".
-
-Addresses Reviewer Major Comment 3:
-Ensures that the output score vector p^F reflects calibrated statistical confidence
-rather than uncalibrated heuristic scores.
+Implements the fixed monotone temperature transformation used by MindScreen.
+The temperature was not learned on labelled data, so the returned values are
+tier scores rather than calibrated clinical probabilities.
 """
 
 import numpy as np
@@ -28,7 +25,7 @@ def apply_temperature_scaling(
         probs: Dict of class -> probability (must sum to ~1.0)
         temperature: Scalar T > 0 (T > 1 softens overconfidence)
     Returns:
-        Calibrated probability dictionary
+        Transformed tier-score dictionary
     """
     labels = list(probs.keys())
     p_vals = np.array([probs[k] for k in labels], dtype=np.float64)

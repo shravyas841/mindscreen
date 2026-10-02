@@ -4,13 +4,23 @@
 .env.production
 backend/.env
 frontend/.env
-# Allow frontend prod env (only contains public backend URL, no secrets)
-!frontend/.env.production
+frontend/.env.production
+
+# Database & Sensitive Data
+*.db
+*.sqlite
+*.sqlite3
+*.exe
+mental_health.db
+backend/mental_health.db
+*cookies*
+reachinbox-scheduler/
 
 # Python
 __pycache__/
 *.py[cod]
 backend/venv/
+.venv/
 *.egg-info/
 .pytest_cache/
 
@@ -18,6 +28,7 @@ backend/venv/
 node_modules/
 frontend/dist/
 frontend/node_modules/
+mindscreen_code_and_evaluation/mindscreen_code_and_evaluation/data/
 
 # ML Models (too large for git — use Git LFS or store separately)
 *.pt

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Optional
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_DIR = Path(__file__).resolve().parent
@@ -13,19 +14,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    REDIS_URL: Optional[str] = None  # Optional: in-memory fallback used if not set
-
-    MODEL_PATH: str = "./ml/checkpoints/best_model.pt"
-    TOKENIZER_NAME: str = "mental/mental-roberta-base"
     HF_TOKEN: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
 
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
 
-    CRISIS_HELPLINE_1: str = "iCall: 9152987821"
-    CRISIS_HELPLINE_2: str = "NIMHANS: 080-46110007"
-    CRISIS_HELPLINE_3: str = "Vandrevala Foundation: 1860-2662-345"
+    CRISIS_HELPLINE_1: str = "Tele-MANAS: 14416 or 1-800-891-4416 (free, 24/7)"
+    CRISIS_HELPLINE_2: str = "iCall (TISS): 9152987821"
 
     ALLOWED_ORIGINS: str = "http://localhost:5173"
 
@@ -34,4 +30,14 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
+    @model_validator(mode="after")
+    def reject_default_production_secret(self):
+        if self.ENVIRONMENT.lower() == "production" and self.SECRET_KEY == "mindscreen-default-secret-change-in-production":
+            raise ValueError("SECRET_KEY must be configured in production")
+        return self
+
 settings = Settings()
+
+
+def crisis_helplines() -> list[str]:
+    return [settings.CRISIS_HELPLINE_1, settings.CRISIS_HELPLINE_2]

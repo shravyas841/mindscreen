@@ -12,7 +12,6 @@ import Assessment from './pages/Assessment';
 import Results from './pages/Results';
 import History from './pages/History';
 import MoodTracker from './pages/MoodTracker';
-import CounselorDashboard from './pages/CounselorDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60 * 1000 } },
@@ -41,7 +40,6 @@ export default function App() {
                 <Route path="/results"    element={<Results />} />
                 <Route path="/history"    element={<History />} />
                 <Route path="/mood"       element={<MoodTracker />} />
-                <Route path="/counselor"  element={<CounselorDashboard />} />
               </Route>
             </Route>
 
