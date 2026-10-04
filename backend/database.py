@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 connect_args = {}
 if settings.DATABASE_URL.startswith("sqlite"):
@@ -19,7 +22,7 @@ try:
 except Exception as e:
     if settings.ENVIRONMENT.lower() == "production":
         raise RuntimeError("Production database connection failed") from e
-    print(f"Primary DB connection failed ({e}). Falling back to local SQLite database.")
+    logger.warning("Primary database unavailable; using local SQLite fallback")
     engine = create_engine(
         "sqlite:///./mental_health.db",
         connect_args={"check_same_thread": False},

@@ -41,6 +41,43 @@ def test_production_rejects_the_default_secret_predictably():
             SECRET_KEY="mindscreen-default-secret-change-in-production",
         )
 
+    with pytest.raises(ValidationError, match="SECRET_KEY must be configured in production"):
+        Settings(
+            _env_file=None,
+            DATABASE_URL="sqlite:///:memory:",
+            ENVIRONMENT="production",
+            SECRET_KEY="your-super-secret-key-here-change-this",
+        )
+
+    with pytest.raises(ValidationError, match="at least 32 characters"):
+        Settings(
+            _env_file=None,
+            DATABASE_URL="sqlite:///:memory:",
+            ENVIRONMENT="production",
+            SECRET_KEY="too-short",
+        )
+
+
+def test_production_rejects_wildcard_cors_and_accepts_explicit_origins():
+    strong_secret = "production-secret-with-at-least-32-characters"
+    with pytest.raises(ValidationError, match="ALLOWED_ORIGINS cannot contain a wildcard"):
+        Settings(
+            _env_file=None,
+            DATABASE_URL="sqlite:///:memory:",
+            ENVIRONMENT="production",
+            SECRET_KEY=strong_secret,
+            ALLOWED_ORIGINS="*",
+        )
+
+    configured = Settings(
+        _env_file=None,
+        DATABASE_URL="sqlite:///:memory:",
+        ENVIRONMENT="production",
+        SECRET_KEY=strong_secret,
+        ALLOWED_ORIGINS="https://mindscreen.vercel.app",
+    )
+    assert configured.ALLOWED_ORIGINS == "https://mindscreen.vercel.app"
+
 
 def test_existing_create_all_schema_initialization_succeeds():
     test_engine = create_engine("sqlite:///:memory:")

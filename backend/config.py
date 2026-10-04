@@ -31,9 +31,20 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def reject_default_production_secret(self):
-        if self.ENVIRONMENT.lower() == "production" and self.SECRET_KEY == "mindscreen-default-secret-change-in-production":
-            raise ValueError("SECRET_KEY must be configured in production")
+    def validate_production_security(self):
+        if self.ENVIRONMENT.lower() == "production":
+            insecure_values = {
+                "",
+                "mindscreen-default-secret-change-in-production",
+                "your-super-secret-key-here-change-this",
+            }
+            if self.SECRET_KEY.strip() in insecure_values or len(self.SECRET_KEY.strip()) < 32:
+                raise ValueError("SECRET_KEY must be configured in production with at least 32 characters")
+            allowed_origins = {
+                origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()
+            }
+            if "*" in allowed_origins:
+                raise ValueError("ALLOWED_ORIGINS cannot contain a wildcard in production")
         return self
 
 settings = Settings()

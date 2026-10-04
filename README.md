@@ -113,7 +113,9 @@ The frontend defaults to `http://localhost:8000`. Set `VITE_API_BASE_URL` for an
 
 ## Authentication and data handling
 
-Registration and login issue signed access and refresh JWTs. Protected routes validate an active user and the expected token type; refresh tokens are rotated by `/api/auth/refresh`. Authentication and prediction endpoints have IP-based rate limits. Production requires a non-default signing secret.
+Registration and login issue signed access and refresh JWTs. Protected routes validate an active user and the expected token type. Refresh tokens are one-time credentials: `/api/auth/refresh` rotates them, and `/api/auth/logout` revokes the current refresh credential. Authentication endpoints use IP-based rate limits; authenticated prediction, PHQ, and Saathi endpoints use per-user limits. Rate-limit counters and refresh-token revocations are stored in API-process memory, so multi-worker or multi-instance deployment requires shared storage such as Redis. Production requires an explicit signing secret of at least 32 characters and explicit CORS origins without wildcards.
+
+The frontend stores tokens in browser `localStorage`. Concurrent authorization failures share one refresh request, and a failed refresh or logout removes only MindScreen authentication tokens. The localStorage approach remains a security limitation of this research prototype.
 
 The prototype stores account records, PHQ responses, mood entries, and generated screening results in its configured database. Journal text and audio are processed for the request but are not persisted. It does not provide application-level encryption-at-rest, retention automation, account deletion, or audit logging. Those gaps mean the repository must not be described as legally compliant with the DPDP Act or another privacy regime without a separate legal and operational review. Never use real participant data in this prototype.
 

@@ -49,7 +49,7 @@ def _query_hf_api(text: str) -> list | None:
                 return data
         logger.warning("Hugging Face inference returned status %s", resp.status_code)
     except Exception as e:
-        logger.warning("Hugging Face inference unavailable: %s", e)
+        logger.warning("Hugging Face inference unavailable (%s)", type(e).__name__)
     return None
 
 

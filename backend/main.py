@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from slowapi import _rate_limit_exceeded_handler
+from fastapi.responses import JSONResponse, RedirectResponse
 from slowapi.errors import RateLimitExceeded
 
 from config import settings
@@ -26,10 +25,13 @@ def root():
 
 # Rate Limiting
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS configuration — include all local dev ports + production Vercel URL
-allowed_origins = [
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request, exc):
+    return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+
+# CORS configuration: production trusts only explicitly configured origins.
+development_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
@@ -37,9 +39,11 @@ allowed_origins = [
     "http://127.0.0.1:5174",
     "http://127.0.0.1:5175",
     "http://localhost:3000",
-    "https://mindscreen.vercel.app",
-    *[origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()],
 ]
+configured_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
+allowed_origins = configured_origins
+if settings.ENVIRONMENT.lower() != "production":
+    allowed_origins = [*development_origins, *configured_origins]
 # Deduplicate
 allowed_origins = list(dict.fromkeys(allowed_origins))
 

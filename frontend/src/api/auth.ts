@@ -13,3 +13,7 @@ export const getMe = async (): Promise<User> => {
   const res = await apiClient.get('/api/auth/me');
   return res.data;
 };
+
+export const revokeSession = async (refreshToken: string): Promise<void> => {
+  await apiClient.post('/api/auth/logout', { refresh_token: refreshToken });
+};

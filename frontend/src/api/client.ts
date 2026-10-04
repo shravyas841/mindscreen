@@ -20,11 +20,32 @@ export function storeRefreshedTokens(
   }
 }
 
+export function clearAuthTokens(
+  storage: Pick<Storage, 'removeItem'> = localStorage,
+) {
+  storage.removeItem('access_token');
+  storage.removeItem('refresh_token');
+}
+
 interface RefreshHandlerDependencies {
-  storage?: Pick<Storage, 'getItem' | 'setItem' | 'clear'>;
+  storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
   post?: typeof axios.post;
   retry?: (config: any) => Promise<any>;
   redirectToLogin?: () => void;
+}
+
+type RefreshedTokens = { access_token: string; refresh_token?: string };
+let refreshInFlight: Promise<RefreshedTokens> | null = null;
+
+function refreshTokens(post: typeof axios.post, refreshToken: string): Promise<RefreshedTokens> {
+  if (!refreshInFlight) {
+    refreshInFlight = post(`${API_BASE}/api/auth/refresh`, {
+      refresh_token: refreshToken,
+    }).then(({ data }) => data).finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
 }
 
 export async function handleResponseError(error: any, dependencies: RefreshHandlerDependencies = {}) {
@@ -40,15 +61,16 @@ export async function handleResponseError(error: any, dependencies: RefreshHandl
     original._retry = true;
     try {
       const refresh = storage.getItem('refresh_token');
-      const { data } = await post(`${API_BASE}/api/auth/refresh`, {
-        refresh_token: refresh,
-      });
+      if (!refresh) {
+        throw new Error('No refresh token available');
+      }
+      const data = await refreshTokens(post, refresh);
       storeRefreshedTokens(data, storage);
       original.headers = original.headers ?? {};
       original.headers.Authorization = `Bearer ${data.access_token}`;
       return retry(original);
     } catch {
-      storage.clear();
+      clearAuthTokens(storage);
       redirectToLogin();
     }
   }

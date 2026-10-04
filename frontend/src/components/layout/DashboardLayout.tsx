@@ -11,7 +11,7 @@ export function DashboardLayout() {
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
 
   const handleLogout = () => {
-    logoutUser();
+    void logoutUser();
     navigate('/login');
   };
 

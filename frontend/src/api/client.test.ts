@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { handleResponseError, storeRefreshedTokens } from './client';
+import { clearAuthTokens, handleResponseError, storeRefreshedTokens } from './client';
 
 
 describe('storeRefreshedTokens', () => {
@@ -26,16 +26,11 @@ describe('storeRefreshedTokens', () => {
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const values = { ...initial };
-  let cleared = false;
   return {
     values,
-    get cleared() { return cleared; },
     getItem(key: string) { return values[key] ?? null; },
     setItem(key: string, value: string) { values[key] = value; },
-    clear() {
-      cleared = true;
-      Object.keys(values).forEach((key) => delete values[key]);
-    },
+    removeItem(key: string) { delete values[key]; },
   };
 }
 
@@ -92,7 +87,76 @@ describe('refresh response interceptor', () => {
       redirectToLogin: () => { redirected = true; },
     })).rejects.toBe(error);
 
-    expect(storage.cleared).toBe(true);
+    expect(storage.values).toEqual({});
     expect(redirected).toBe(true);
+  });
+
+  it('does not call refresh without a refresh token or retry a request twice', async () => {
+    const storage = memoryStorage({ unrelated: 'preserved' });
+    let postCount = 0;
+    const error = { response: { status: 401 }, config: { headers: {} } };
+
+    await expect(handleResponseError(error, {
+      storage,
+      post: (async () => { postCount += 1; }) as any,
+      retry: async () => { throw new Error('should not retry'); },
+      redirectToLogin: () => undefined,
+    })).rejects.toBe(error);
+    expect(postCount).toBe(0);
+    expect(storage.values).toEqual({ unrelated: 'preserved' });
+
+    const retriedError = { response: { status: 401 }, config: { _retry: true } };
+    await expect(handleResponseError(retriedError, {
+      storage,
+      post: (async () => { postCount += 1; }) as any,
+    })).rejects.toBe(retriedError);
+    expect(postCount).toBe(0);
+  });
+
+  it('uses one refresh request for concurrent 401 responses', async () => {
+    const storage = memoryStorage({ access_token: 'old-access', refresh_token: 'old-refresh' });
+    let postCount = 0;
+    let finishRefresh: ((value: any) => void) | undefined;
+    const post = (() => {
+      postCount += 1;
+      return new Promise((resolve) => { finishRefresh = resolve; });
+    }) as any;
+    let retryCount = 0;
+    const retry = async (config: any) => {
+      retryCount += 1;
+      return config.headers.Authorization;
+    };
+
+    const first = handleResponseError(
+      { response: { status: 401 }, config: { headers: {} } },
+      { storage, post, retry, redirectToLogin: () => undefined },
+    );
+    const second = handleResponseError(
+      { response: { status: 401 }, config: { headers: {} } },
+      { storage, post, retry, redirectToLogin: () => undefined },
+    );
+
+    expect(postCount).toBe(1);
+    finishRefresh?.({ data: { access_token: 'new-access', refresh_token: 'new-refresh' } });
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      'Bearer new-access',
+      'Bearer new-access',
+    ]);
+    expect(retryCount).toBe(2);
+    expect(storage.values.refresh_token).toBe('new-refresh');
+  });
+});
+
+describe('clearAuthTokens', () => {
+  it('clears only authentication credentials during logout', () => {
+    const storage = memoryStorage({
+      access_token: 'access',
+      refresh_token: 'refresh',
+      assessment_draft: 'keep-me',
+    });
+
+    clearAuthTokens(storage);
+
+    expect(storage.values).toEqual({ assessment_draft: 'keep-me' });
   });
 });

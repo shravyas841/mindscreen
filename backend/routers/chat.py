@@ -192,9 +192,9 @@ def call_gemini_llm(message: str, history: List[ChatMessage], gemini_key: str) -
                         text = parts[0]["text"].strip()
                         if len(text) > 10:
                             return text
-            logger.warning(f"Gemini {model} API status {resp.status_code}: {resp.text[:200]}")
+            logger.warning("Gemini %s API returned status %s", model, resp.status_code)
     except Exception as e:
-        logger.warning(f"Gemini API error: {e}")
+        logger.warning("Gemini API unavailable (%s)", type(e).__name__)
     return None
 
 def call_hf_llm(message: str, history: List[ChatMessage], hf_token: str) -> Optional[str]:
@@ -236,12 +236,12 @@ def call_hf_llm(message: str, history: List[ChatMessage], hf_token: str) -> Opti
             if content and len(content.strip()) > 20:
                 return content.strip()
 
-        logger.warning(f"HF API status {resp.status_code}: {resp.text[:300]}")
+        logger.warning("HF API returned status %s", resp.status_code)
 
     except requests.Timeout:
         logger.warning("HF API timeout — falling back to rule-based engine")
     except Exception as e:
-        logger.warning(f"HF API error: {e}")
+        logger.warning("HF API unavailable (%s)", type(e).__name__)
 
     return None
 
